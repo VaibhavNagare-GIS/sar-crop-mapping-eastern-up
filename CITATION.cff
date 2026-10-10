@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this work, please cite it as below."
+title: "Sentinel-1 SAR crop type mapping in eastern Uttar Pradesh, India (Rabi 2021-22)"
+authors:
+  - family-names: Nagare
+    given-names: Vaibhav
+license: MIT
+repository-code: "https://github.com/REPLACE_WITH_YOUR_GITHUB_USERNAME/sar-crop-mapping-eastern-up"

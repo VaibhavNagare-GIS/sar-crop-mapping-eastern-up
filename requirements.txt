@@ -1,0 +1,9 @@
+# Versions that were installed and used on the user's machine (Python 3.14, Windows)
+rasterio==1.5.2
+pandas==3.0.6
+numpy==2.5.3
+earthengine-api==1.7.46
+scikit-learn==1.9.1
+scipy==1.18.1
+matplotlib==3.11.2
+# to be added when the map tiles are built (not installed yet): mercantile, Pillow
