@@ -1,0 +1,16 @@
+{
+  "field_spec": "data/phase2/2021-10-01+data/phase2/2021-10-01_desc",
+  "pixel_spec": "data/phase2/2021-10-01_mt2+data/phase2/2021-10-01_desc_mt2",
+  "classes": "3",
+  "leaf_field": 10,
+  "leaf_pixel": 20,
+  "trees": 500,
+  "seed": 42,
+  "bench": {
+    "s1_s2": "data/phase2/2021-10-01+data/phase2/2021-10-01_desc+data/phase2/2021-10-01_s2",
+    "asc_only": "data/phase2/2021-10-01"
+  },
+  "embed": "data/phase2/embed.csv",
+  "frozen": "2026-10-10T17:11:25",
+  "git_commit": "898b3e8c7b6ce9d61ca8d1079f6c385c478fd189"
+}
