@@ -74,4 +74,8 @@ s0 = p5.compare(D, csv, r, c)
 assert s0["r"] > 0.9999 and s0["mad"] < 1e-5
 shifts = {s: p5.compare(D, csv, r, c, s)["mad"] for s in ((0, 0), (1, 0), (0, 1))}
 assert min(shifts, key=shifts.get) == (0, 0) and shifts[(1, 0)] > 0.1
+# too few pairs give no statistics instead of warnings; pooling pairs from several chips works
+assert p5.stats(np.array([1.0]), np.array([1.0])) is None
+xs, ys = zip(*[p5.paired(D, csv, r, c) for _ in range(2)])
+assert abs(p5.stats(np.concatenate(xs), np.concatenate(ys))["r"] - 1) < 1e-6
 print("SELFTEST OK")

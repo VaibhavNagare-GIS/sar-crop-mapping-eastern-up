@@ -1,6 +1,6 @@
 """Phase 5a: dense Sentinel-1 feature stacks on each chip's own 10 m grid (for the map and for spatial-context models).
 python p5_chip_features.py parity   --project P [--pass asc|desc] [--mt 2] [--n 3]       compare with the sampled training features
-python p5_chip_features.py download --project P [--pass asc|desc] [--mt 2] [--workers 3] all study chips, resumable
+python p5_chip_features.py download --project P [--pass asc|desc] [--mt 2] [--workers 3 --limit N] all study chips, resumable
 Output: data/phase5/dense_<pass>_mt<k>/<chip>.npy = int16 (bands, h, w), dB x 100, -32768 = no data, band order VV_00..VV_19, VH_00..VH_19."""
 import argparse
 import io
@@ -67,14 +67,25 @@ def dequantise(q):
     return np.where(q == NO, np.nan, q / 100.0).astype(np.float32)
 
 
-def compare(dense, csv, r, c, shift=(0, 0)):
-    """dense (b,h,w) at labelled pixels (r, c) shifted by `shift`, vs csv (n,b). -> r, mean diff, mean abs diff, share |diff|<0.5 dB, n."""
+def paired(dense, csv, r, c, shift=(0, 0)):
+    """Dense values at the labelled pixels (moved by `shift`) and the matching sampled rows; finite pairs only, as flat arrays."""
     rr, cc = r + shift[0], c + shift[1]
     ok = (rr >= 0) & (rr < dense.shape[1]) & (cc >= 0) & (cc < dense.shape[2])
-    a, b = dense[:, rr[ok], cc[ok]].T, csv[ok]
-    m = np.isfinite(a) & np.isfinite(b)
-    d = a[m] - b[m]
-    return dict(r=float(np.corrcoef(a[m], b[m])[0, 1]), mean=float(d.mean()), mad=float(np.abs(d).mean()), within=float((np.abs(d) < 0.5).mean()), n=int(m.sum()))
+    x, y = dense[:, rr[ok], cc[ok]].T, csv[ok]
+    m = np.isfinite(x) & np.isfinite(y)
+    return x[m], y[m]
+
+
+def stats(x, y):
+    """Agreement between dense and sampled values: correlation, mean difference, mean absolute difference (dB), share within 0.5 dB."""
+    if len(x) < 2:
+        return None
+    d = x - y
+    return dict(r=float(np.corrcoef(x, y)[0, 1]), mean=float(d.mean()), mad=float(np.abs(d).mean()), within=float((np.abs(d) < 0.5).mean()), n=len(x))
+
+
+def compare(dense, csv, r, c, shift=(0, 0)):
+    return stats(*paired(dense, csv, r, c, shift))
 
 
 def orbit_table(data, pass_):
@@ -86,39 +97,50 @@ def orbit_table(data, pass_):
     return orb[~orb.weak]
 
 
-def parity(ee, data, pass_, mt, n, start):
+SHIFTS = ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1))
+
+
+def parity(ee, data, pass_, mt, n, start, min_px=100):
+    """Compare dense chip features with the sampled training features. The decision uses all chosen chips pooled, because a chip with
+    few labelled pixels gives unstable averages. Pass: best shift (0, 0), r >= 0.98, |mean difference| < 0.1 dB, MAD < 0.5 dB."""
     pix = pd.read_csv(data / "phase1" / "pixels.csv", dtype={"chip": str})
     pix["pid"] = pix.index
     orb = orbit_table(data, pass_)
     folder = f"{start}{'_desc' if pass_ == 'desc' else ''}{f'_mt{mt}' if mt else ''}"
     feats = pd.read_csv(data / "phase2" / folder / "features.csv", index_col="pid")
     files = inv.find_chips(data / "train_labels")
-    chips = sorted(set(pix.chip) & set(orb.index))
+    count = pix.chip.value_counts()
+    chips = sorted(c for c in set(pix.chip) & set(orb.index) if count[c] >= min_px)
+    if len(chips) < n:
+        raise SystemExit(f"only {len(chips)} chips have {min_px} or more labelled pixels")
     pick = list(np.random.default_rng(0).choice(chips, n, replace=False))
-    imgs, rows = {}, []
+    imgs, pooled, secs = {}, {s: ([], []) for s in SHIFTS}, []
     for cid in pick:
         o = orb.loc[cid, "orbit"]
         if o not in imgs:
             imgs[o] = pe.orbit_image(ee, o, start, mt=mt)
-        g, t0 = grid(files[cid][1]), time.time()
-        D = fetch_chip(ee, imgs[o], g, NAMES)
-        sec = time.time() - t0
+        t0 = time.time()
+        D = fetch_chip(ee, imgs[o], grid(files[cid][1]), NAMES)
+        secs.append(time.time() - t0)
         px = pix[pix.chip == cid]
-        X = feats.loc[px.pid, NAMES].to_numpy()
-        r, c = px.row.to_numpy(), px.col.to_numpy()
-        res = {s: compare(D, X, r, c, s) for s in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1))}
-        best = min(res, key=lambda s: res[s]["mad"])
-        p0 = res[(0, 0)]
-        ok = best == (0, 0) and p0["r"] >= 0.98 and abs(p0["mean"]) < 0.1 and p0["mad"] < 0.5          # acceptance thresholds for the parity check
-        print(f"chip {cid} {o}: {sec:.0f}s, {len(px)} labelled px | r {p0['r']:.4f} mean diff {p0['mean']:+.3f} dB MAD {p0['mad']:.3f} dB "
-              f"within 0.5 dB {p0['within']:.1%} | best shift {best} | {'PASS' if ok else 'FAIL'}")
-        rows.append(dict(chip=cid, seconds=sec, ok=ok))
-    df = pd.DataFrame(rows)
-    print(f"\nPARITY {'PASS' if df.ok.all() else 'FAIL'}; mean {df.seconds.mean():.0f} s per chip -> about {df.seconds.mean() * len(chips) / 3600 / 3:.1f} h wall time for {len(chips)} chips with 3 workers (compute cost not measured: read EECU in Monitoring)")
-    return bool(df.ok.all())
+        X, r, c = feats.loc[px.pid, NAMES].to_numpy(), px.row.to_numpy(), px.col.to_numpy()
+        for s_ in SHIFTS:
+            x, y = paired(D, X, r, c, s_)
+            pooled[s_][0].append(x)
+            pooled[s_][1].append(y)
+        st = stats(*paired(D, X, r, c))
+        print(f"chip {cid} {o}: {secs[-1]:.0f}s, {len(px)} labelled px | r {st['r']:.4f} mean diff {st['mean']:+.3f} dB MAD {st['mad']:.3f} dB within 0.5 dB {st['within']:.1%}")
+    res = {s_: stats(np.concatenate(v[0]), np.concatenate(v[1])) for s_, v in pooled.items()}
+    for s_, st in res.items():
+        print(f"pooled shift {s_}: r {st['r']:.4f} mean {st['mean']:+.3f} dB MAD {st['mad']:.3f} dB n {st['n']}")
+    best = min(res, key=lambda k: res[k]["mad"])
+    p0 = res[(0, 0)]
+    ok = best == (0, 0) and p0["r"] >= 0.98 and abs(p0["mean"]) < 0.1 and p0["mad"] < 0.5
+    print(f"\nPARITY {'PASS' if ok else 'FAIL'} ({pass_}); {np.mean(secs):.0f} s per chip")
+    return ok
 
 
-def download(ee, data, pass_, mt, workers, start):
+def download(ee, data, pass_, mt, workers, start, limit=0):
     pix = pd.read_csv(data / "phase1" / "pixels.csv", dtype={"chip": str})
     orb = orbit_table(data, pass_)
     chips = sorted(set(pix.chip) & set(orb.index))
@@ -127,6 +149,7 @@ def download(ee, data, pass_, mt, workers, start):
     out.mkdir(parents=True, exist_ok=True)
     imgs = {o: pe.orbit_image(ee, o, start, mt=mt) for o in orb.loc[chips, "orbit"].unique()}
     todo = [c for c in chips if not (out / f"{c}.npy").exists()]
+    todo = todo[:limit] if limit else todo
     print(f"{len(chips)} chips, {len(todo)} to do -> {out}")
 
     def one(cid):
@@ -160,6 +183,7 @@ def main():
     ap.add_argument("--mt", type=int, default=2)
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--workers", type=int, default=3)
+    ap.add_argument("--limit", type=int, default=0, help="download only the first N missing chips (for timing and cost checks)")
     ap.add_argument("--start", default=study.SEASON_START)
     ap.add_argument("--data", default="data")
     a = ap.parse_args()
@@ -167,7 +191,7 @@ def main():
     ee = study.gee_init(a.project)
     if a.what == "parity":
         raise SystemExit(0 if parity(ee, Path(a.data), a.pass_, a.mt, a.n, a.start) else 1)
-    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start)
+    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit)
 
 
 if __name__ == "__main__":
