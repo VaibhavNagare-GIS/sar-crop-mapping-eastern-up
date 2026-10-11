@@ -9,3 +9,16 @@
 | `src/run_3f.py`, `run_3g.py` | Runbooks (3F: extractions and feature ladder; 3G: window controls and leaf choice) | |
 | `tests/run_all.py` | Runs every self-test; each must print SELFTEST OK | |
 Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive; the last window of 2021-10-01 ends 28 May 2022 inclusive). `p3_sweep.load(spec, splits)` returns train rows unless a caller asks for test; only `p4_final.py` does.
+
+## Added later
+| File | Role | Output |
+|---|---|---|
+| `src/p5_chip_features.py` | Dense Sentinel-1 stacks per chip (`parity`, `download`, option `--set`) | `data/phase5<set>/dense_<pass>_mt<k>/<chip>.npy` |
+| `src/p5_dense_table.py` | Training table taken from the dense stacks | `data/phase2/dense_<pass>_mt<k><set>/features.csv` |
+| `src/p6_weights.py` | Class weights on probabilities, scored on held-out blocks | `data/phase3/weights_<level>.json` |
+| `src/p6_objects.py` | Pixel vs true field vs superpixel objects; `--smoke` for a quick real-data check | `data/phase6/objects.csv` |
+| `src/p6_context.py` | Local mean, standard deviation and entropy features | `data/phase6/context.csv` |
+| `src/p1_orbit_summary.py` | Chips covered by each Sentinel-1 orbit and orbit combination | printed |
+| `src/p1_pixels.py`, `p1_coverage.py` | `--set _near` or `--set _far` builds an evaluation set from cells never used for training | `data/phase1<set>/` |
+| `src/run_5.py`, `run_6.py`, `run_7.py` | Runbooks: dense chips, accuracy experiments, extra evaluation set | |
+| `src/p4_report.py` | Summary tables from `results/` | `results/test_summary.md` |

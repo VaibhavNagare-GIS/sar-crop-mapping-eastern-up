@@ -1,10 +1,12 @@
 """Phase 1a: labelled-pixel table for the study block, with a leak-proof train/test split.
 
-Usage:  python p1_pixels.py [data_dir]        (needs data/inventory from p0_inventory.py)
-Writes data/phase1/pixels.csv and fields_study.csv.
-Split rule: whole FIELDS, and whole ~11 km spatial blocks, go to either train or test. Never both.
+Usage:  python src/p1_pixels.py [data_dir] [--set _near|_far]    (needs data/inventory from p0_inventory.py)
+Writes data/phase1<set>/pixels.csv and fields_study.csv.
+Study block: whole FIELDS, and whole ~11 km spatial blocks, go to either train or test. Never both.
+With --set the cells come from study.SETS and every field is marked "external" (no split). Fields that share a 0.1 degree
+block with the study block are dropped, so no block is used on both sides.
 """
-import sys
+import argparse
 from pathlib import Path
 
 import env_fix  # must come before rasterio
@@ -18,15 +20,15 @@ from sklearn.model_selection import StratifiedGroupKFold
 import p0_inventory as inv
 import study
 
-MIN_TEST_FIELDS = 15  # my rule of thumb: fewer test fields per class gives very wide intervals
+MIN_TEST_FIELDS = 15  # fewer test fields per class gives very wide intervals
 
 
-def build(data_dir="data", out_dir=None, cells=None, classes=None, seed=42, test_frac=0.2, block_deg=0.1):
+def build(data_dir="data", out_dir=None, cells=None, classes=None, seed=42, test_frac=0.2, block_deg=0.1, set_=""):
     env_fix.check()
-    cells = cells or study.BLOCK_CELLS
+    cells = cells or study.SETS[set_]
     classes = classes or study.CLASSES
     data_dir = Path(data_dir)
-    out = Path(out_dir) if out_dir else data_dir / "phase1"
+    out = Path(out_dir) if out_dir else data_dir / f"phase1{set_}"
     out.mkdir(parents=True, exist_ok=True)
     chips = pd.read_csv(data_dir / "inventory" / "chips.csv", dtype={"chip": str, "cell": str})
     fields = pd.read_csv(data_dir / "inventory" / "fields.csv")
@@ -66,16 +68,26 @@ def build(data_dir="data", out_dir=None, cells=None, classes=None, seed=42, test
     ft["block"] = (np.floor(ft.lon / block_deg).astype(int).astype(str) + "_"
                    + np.floor(ft.lat / block_deg).astype(int).astype(str))
     ft["crop"] = ft.label.map(classes)
-    sg = StratifiedGroupKFold(n_splits=round(1 / test_frac), shuffle=True, random_state=seed)
-    _, te = next(sg.split(ft, ft.label, ft.block))
-    ft["split"] = "train"
-    ft.iloc[te, ft.columns.get_loc("split")] = "test"
-    tr_b, te_b = set(ft.block[ft.split == "train"]), set(ft.block[ft.split == "test"])
-    if tr_b & te_b:
-        raise SystemExit("Spatial block in both train and test (bug)")
-    cnt = ft.pivot_table(index="crop", columns="split", values="npix", aggfunc="size", fill_value=0)
-    if set(cnt.columns) != {"train", "test"} or (cnt == 0).any().any():
-        raise SystemExit(f"A class is missing from train or test:\n{cnt}")
+    if set_:
+        used = set(pd.read_csv(data_dir / "phase1" / "pixels.csv", usecols=["block"]).block)
+        n_all = len(ft)
+        ft = ft[~ft.block.isin(used)].copy()
+        print(f"{n_all - len(ft)} of {n_all} fields dropped: they share a {block_deg} degree block with the study block")
+        pix = pix[pix.field.isin(ft.index)].reset_index(drop=True)
+        ft["split"] = "external"
+        cnt = ft.pivot_table(index="crop", columns="split", values="npix", aggfunc="size", fill_value=0)
+        tr_b, te_b = set(), set(ft.block)
+    else:
+        sg = StratifiedGroupKFold(n_splits=round(1 / test_frac), shuffle=True, random_state=seed)
+        _, te = next(sg.split(ft, ft.label, ft.block))
+        ft["split"] = "train"
+        ft.iloc[te, ft.columns.get_loc("split")] = "test"
+        tr_b, te_b = set(ft.block[ft.split == "train"]), set(ft.block[ft.split == "test"])
+        if tr_b & te_b:
+            raise SystemExit("Spatial block in both train and test (bug)")
+        cnt = ft.pivot_table(index="crop", columns="split", values="npix", aggfunc="size", fill_value=0)
+        if set(cnt.columns) != {"train", "test"} or (cnt == 0).any().any():
+            raise SystemExit(f"A class is missing from train or test:\n{cnt}")
     pix["split"] = pix.field.map(ft.split)
     pix["block"] = pix.field.map(ft.block)
     pix["crop"] = pix.label.map(classes)
@@ -84,11 +96,15 @@ def build(data_dir="data", out_dir=None, cells=None, classes=None, seed=42, test
     print(f"\nfields per class and split (blocks: {len(tr_b)} train, {len(te_b)} test):\n{cnt.to_string()}")
     px = pix.pivot_table(index="crop", columns="split", values="field", aggfunc="size", fill_value=0)
     print(f"\npixels per class and split:\n{px.to_string()}")
-    small = cnt.index[cnt["test"] < MIN_TEST_FIELDS].tolist()
+    small = cnt.index[cnt["test" if not set_ else "external"] < MIN_TEST_FIELDS].tolist()
     if small:
         print(f"\nWARNING: fewer than {MIN_TEST_FIELDS} test fields for {small}: their accuracy will have wide intervals.")
     return pix, ft
 
 
 if __name__ == "__main__":
-    build(sys.argv[1] if len(sys.argv) > 1 else "data")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("data", nargs="?", default="data")
+    ap.add_argument("--set", dest="set_", default="", choices=sorted(study.SETS))
+    a = ap.parse_args()
+    build(a.data, set_=a.set_)

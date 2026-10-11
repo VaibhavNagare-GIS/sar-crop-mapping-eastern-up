@@ -1,7 +1,7 @@
 """Phase 1b: which Sentinel-1 orbit covers each study chip, and pick one orbit per chip.
 
-Usage:  python p1_coverage.py --project vaibhav-gee [--data data]
-Writes data/phase1/orbit_counts.csv and chip_orbits.csv.
+Usage:  python src/p1_coverage.py --project vaibhav-gee [--data data] [--set _near|_far]
+Writes data/phase1<set>/orbit_counts.csv and chip_orbits.csv.
 Rule: use ascending orbits only (one look direction and pass time), take the ascending
 orbit with the most valid scenes at ALL 5 sample points of the chip; fall back to descending
 only when ascending is too thin, and flag it.
@@ -13,7 +13,7 @@ import pandas as pd
 
 import study
 
-MIN_SCENES = 15  # my rule of thumb: about two thirds of the ~23 possible dates
+MIN_SCENES = 15  # about two thirds of the ~23 possible dates
 
 
 def choose(counts, prefer="ASC", min_count=MIN_SCENES, fallback=True):
@@ -36,12 +36,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--project", required=True)
     ap.add_argument("--data", default="data")
+    ap.add_argument("--set", dest="set_", default="", choices=sorted(study.SETS))
     a = ap.parse_args()
     data = Path(a.data)
-    out = data / "phase1"
+    out = data / f"phase1{a.set_}"
     out.mkdir(parents=True, exist_ok=True)
     chips = pd.read_csv(data / "inventory" / "chips.csv", dtype={"chip": str, "cell": str})
-    chips = chips[chips.cell.isin(study.BLOCK_CELLS)].reset_index(drop=True)
+    chips = chips[chips.cell.isin(study.SETS[a.set_])].reset_index(drop=True)
     if chips.empty:
         raise SystemExit("No chips in the study cells. Run p0_inventory.py first.")
     ee = study.gee_init(a.project)

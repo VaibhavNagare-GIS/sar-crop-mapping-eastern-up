@@ -75,7 +75,15 @@ def main():
         assert (pix.split.values == pix2.split.values).all()
         saved = pd.read_csv(root / "phase1" / "pixels.csv", dtype={"chip": str})
         assert saved.chip.str.startswith("c").all() and len(saved) == total   # chip ids stay text
+        # external set: no split, and no 0.1 degree block shared with the study block
+        half = len(cells) // 2
+        p1.build(root, root / "phase1", cells=cells[:half], classes=study.CLASSES, seed=42)
+        ext, _ = p1.build(root, None, cells=cells[half:], classes=study.CLASSES, set_="_t")
+        saved_ext = pd.read_csv(root / "phase1_t" / "pixels.csv", dtype={"chip": str})
+        study_blocks = set(pd.read_csv(root / "phase1" / "pixels.csv").block)
+        assert len(ext) > 0 and set(ext.split) == {"external"} and not set(ext.block) & study_blocks and len(saved_ext) == len(ext)
     assert study.season_end() == "2022-05-29", study.season_end()
+    assert set(study.SETS) == {"", "_near", "_far"} and not set(study.SETS["_near"]) & set(study.BLOCK_CELLS)
     print("SELFTEST OK")
 
 

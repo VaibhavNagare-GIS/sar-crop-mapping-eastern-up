@@ -1,7 +1,7 @@
 """Phase 5a: dense Sentinel-1 feature stacks on each chip's own 10 m grid (for the map and for spatial-context models).
 python p5_chip_features.py parity   --project P [--pass asc|desc] [--mt 2] [--n 3]       compare with the sampled training features
-python p5_chip_features.py download --project P [--pass asc|desc] [--mt 2] [--workers 3 --limit N] all study chips, resumable
-Output: data/phase5/dense_<pass>_mt<k>/<chip>.npy = int16 (bands, h, w), dB x 100, -32768 = no data, band order VV_00..VV_19, VH_00..VH_19."""
+python p5_chip_features.py download --project P [--pass asc|desc] [--mt 2] [--workers 3 --limit N --set _near] all chips of the study block (or of a --set), resumable
+Output: data/phase5<set>/dense_<pass>_mt<k>/<chip>.npy = int16 (bands, h, w), dB x 100, -32768 = no data, band order VV_00..VV_19, VH_00..VH_19."""
 import argparse
 import io
 import os
@@ -88,12 +88,12 @@ def compare(dense, csv, r, c, shift=(0, 0)):
     return stats(*paired(dense, csv, r, c, shift))
 
 
-def orbit_table(data, pass_):
+def orbit_table(data, pass_, set_=""):
     if pass_ == "desc":
         import p1_coverage
-        orb = p1_coverage.choose(pd.read_csv(data / "phase1" / "orbit_counts.csv", dtype={"chip": str}).set_index("chip"), prefer="DESC", fallback=False)
+        orb = p1_coverage.choose(pd.read_csv(data / f"phase1{set_}" / "orbit_counts.csv", dtype={"chip": str}).set_index("chip"), prefer="DESC", fallback=False)
     else:
-        orb = pd.read_csv(data / "phase1" / "chip_orbits.csv", dtype={"chip": str}).set_index("chip")
+        orb = pd.read_csv(data / f"phase1{set_}" / "chip_orbits.csv", dtype={"chip": str}).set_index("chip")
     return orb[~orb.weak]
 
 
@@ -140,12 +140,12 @@ def parity(ee, data, pass_, mt, n, start, min_px=100):
     return ok
 
 
-def download(ee, data, pass_, mt, workers, start, limit=0):
-    pix = pd.read_csv(data / "phase1" / "pixels.csv", dtype={"chip": str})
-    orb = orbit_table(data, pass_)
+def download(ee, data, pass_, mt, workers, start, limit=0, set_=""):
+    pix = pd.read_csv(data / f"phase1{set_}" / "pixels.csv", dtype={"chip": str})
+    orb = orbit_table(data, pass_, set_)
     chips = sorted(set(pix.chip) & set(orb.index))
     files = inv.find_chips(data / "train_labels")
-    out = data / "phase5" / f"dense_{pass_}_mt{mt}"
+    out = data / f"phase5{set_}" / f"dense_{pass_}_mt{mt}"
     out.mkdir(parents=True, exist_ok=True)
     imgs = {o: pe.orbit_image(ee, o, start, mt=mt) for o in orb.loc[chips, "orbit"].unique()}
     todo = [c for c in chips if not (out / f"{c}.npy").exists()]
@@ -184,6 +184,7 @@ def main():
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0, help="download only the first N missing chips (for timing and cost checks)")
+    ap.add_argument("--set", dest="set_", default="", choices=sorted(study.SETS))
     ap.add_argument("--start", default=study.SEASON_START)
     ap.add_argument("--data", default="data")
     a = ap.parse_args()
@@ -191,7 +192,7 @@ def main():
     ee = study.gee_init(a.project)
     if a.what == "parity":
         raise SystemExit(0 if parity(ee, Path(a.data), a.pass_, a.mt, a.n, a.start) else 1)
-    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit)
+    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit, a.set_)
 
 
 if __name__ == "__main__":

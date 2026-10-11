@@ -29,6 +29,12 @@ with tempfile.TemporaryDirectory() as d:
     assert list(out.pid) == [0, 1, 2] and (out.orbit == "ASC_56").all()
     for _, r in out.iterrows():
         assert np.allclose(r[cf.NAMES].to_numpy(float), stacks[r.chip][:, r.row, r.col], equal_nan=True)
+    # an extra set reads and writes its own folders
+    import shutil
+    shutil.copytree(d / "phase1", d / "phase1_x")
+    shutil.copytree(d / "phase5", d / "phase5_x")
+    ox = dt.build(d, "asc", 2, "_x")
+    assert len(ox) == 3 and np.allclose(ox[cf.NAMES].to_numpy(float), out[cf.NAMES].to_numpy(float), equal_nan=True)
     (d / "phase5" / "dense_asc_mt2" / "b.npy").unlink()
     try:
         dt.build(d, "asc", 2)

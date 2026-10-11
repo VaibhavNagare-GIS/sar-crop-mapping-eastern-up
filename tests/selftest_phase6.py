@@ -32,6 +32,17 @@ res = ob.run(parts, meta, pix, lambda chip: stacks[chip], "3", leaf=5, trees=30,
 assert {"pixel", "field", "slic144_c1.0"} <= set(res)
 assert res["field"]["f1"] > res["pixel"]["f1"] and res["slic144_c1.0"]["f1"] > res["pixel"]["f1"], {k: v["f1"] for k, v in res.items()}
 
+# a band that is missing over the whole chip (an empty window) must not break the superpixels
+gap = stacks["a"].copy()
+gap[5:7] = np.nan
+seg = ob.segments(gap, 144, 1.0)
+assert seg.shape == (H, W) and seg.max() >= 1
+
+# context features run end to end and add 16 columns
+import p6_context as cx
+cr = cx.run(parts, meta, pix, lambda chip: stacks[chip], "3", leaf=5, trees=30, seeds=1)
+assert cr["base+context"]["n_features"] - cr["base"]["n_features"] == 16
+
 # class weights: probabilities biased against a minority class are repaired, and the held-out gain is positive
 n = 3000
 y = rng.choice([1, 2, 6], n, p=[0.7, 0.2, 0.1])
