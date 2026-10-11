@@ -6,4 +6,5 @@ earthengine-api==1.7.46
 scikit-learn==1.9.1
 scipy==1.18.1
 matplotlib==3.11.2
-# to be added when the map tiles are built (not installed yet): mercantile, Pillow
+
+scikit-image>=0.25
