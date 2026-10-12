@@ -88,7 +88,17 @@ def compare(dense, csv, r, c, shift=(0, 0)):
     return stats(*paired(dense, csv, r, c, shift))
 
 
-def orbit_table(data, pass_, set_=""):
+MIN_EXTRA = 18   # scenes needed in the season for an extra orbit to be used on a chip
+
+
+def orbit_table(data, pass_, set_="", orbit=None):
+    """One orbit per chip. With `orbit` (for example DESC_165) only the chips that have at least MIN_EXTRA scenes of that orbit are kept."""
+    if orbit:
+        counts = pd.read_csv(data / f"phase1{set_}" / "orbit_counts.csv", dtype={"chip": str}).set_index("chip")
+        if orbit not in counts.columns:
+            raise SystemExit(f"orbit {orbit} not found; available: {list(counts.columns)}")
+        keep = counts.index[counts[orbit] >= MIN_EXTRA]
+        return pd.DataFrame({"orbit": orbit, "weak": False}, index=keep)
     if pass_ == "desc":
         import p1_coverage
         orb = p1_coverage.choose(pd.read_csv(data / f"phase1{set_}" / "orbit_counts.csv", dtype={"chip": str}).set_index("chip"), prefer="DESC", fallback=False)
@@ -140,12 +150,12 @@ def parity(ee, data, pass_, mt, n, start, min_px=100):
     return ok
 
 
-def download(ee, data, pass_, mt, workers, start, limit=0, set_=""):
+def download(ee, data, pass_, mt, workers, start, limit=0, set_="", orbit=None):
     pix = pd.read_csv(data / f"phase1{set_}" / "pixels.csv", dtype={"chip": str})
-    orb = orbit_table(data, pass_, set_)
+    orb = orbit_table(data, pass_, set_, orbit)
     chips = sorted(set(pix.chip) & set(orb.index))
     files = inv.find_chips(data / "train_labels")
-    out = data / f"phase5{set_}" / f"dense_{pass_}_mt{mt}"
+    out = data / f"phase5{set_}" / f"dense_{orbit or pass_}_mt{mt}"
     out.mkdir(parents=True, exist_ok=True)
     imgs = {o: pe.orbit_image(ee, o, start, mt=mt) for o in orb.loc[chips, "orbit"].unique()}
     todo = [c for c in chips if not (out / f"{c}.npy").exists()]
@@ -184,6 +194,7 @@ def main():
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0, help="download only the first N missing chips (for timing and cost checks)")
+    ap.add_argument("--orbit", default=None, help="use one named orbit (for example DESC_165) on the chips that have it")
     ap.add_argument("--set", dest="set_", default="", choices=sorted(study.SETS))
     ap.add_argument("--start", default=study.SEASON_START)
     ap.add_argument("--data", default="data")
@@ -192,7 +203,7 @@ def main():
     ee = study.gee_init(a.project)
     if a.what == "parity":
         raise SystemExit(0 if parity(ee, Path(a.data), a.pass_, a.mt, a.n, a.start) else 1)
-    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit, a.set_)
+    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit, a.set_, a.orbit)
 
 
 if __name__ == "__main__":

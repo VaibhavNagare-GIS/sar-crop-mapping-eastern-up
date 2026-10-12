@@ -35,6 +35,14 @@ with tempfile.TemporaryDirectory() as d:
     shutil.copytree(d / "phase5", d / "phase5_x")
     ox = dt.build(d, "asc", 2, "_x")
     assert len(ox) == 3 and np.allclose(ox[cf.NAMES].to_numpy(float), out[cf.NAMES].to_numpy(float), equal_nan=True)
+    pd.DataFrame({"chip": ["a", "b"], "ASC_56": [20, 20], "DESC_165": [19, 3]}).to_csv(d / "phase1" / "orbit_counts.csv", index=False)
+    only = cf.orbit_table(d, "asc", "", "DESC_165")
+    assert list(only.index) == ["a"] and only.orbit.iloc[0] == "DESC_165"
+    try:
+        cf.orbit_table(d, "asc", "", "ASC_999")
+        raise AssertionError("unknown orbit must stop")
+    except SystemExit:
+        pass
     (d / "phase5" / "dense_asc_mt2" / "b.npy").unlink()
     try:
         dt.build(d, "asc", 2)
