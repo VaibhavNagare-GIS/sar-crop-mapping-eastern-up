@@ -37,6 +37,8 @@ gap = stacks["a"].copy()
 gap[5:7] = np.nan
 seg = ob.segments(gap, 144, 1.0)
 assert seg.shape == (H, W) and seg.max() >= 1
+z = ob.pc_image(gap)
+assert z.shape == (H, W, 5) and np.isfinite(z).all() and np.allclose(z.reshape(-1, 5).std(axis=0), 1, atol=1e-6)
 
 # context features run end to end and add 16 columns
 import p6_context as cx

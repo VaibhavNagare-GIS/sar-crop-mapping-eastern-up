@@ -5,6 +5,7 @@ local mean (5 x 5 window), local standard deviation (3 x 3 and 5 x 5) and local 
 Rule: keep only if macro-F1 rises by 0.02 or more over the base features and AUC does not fall."""
 import argparse
 import datetime as dt
+import time
 from pathlib import Path
 
 import numpy as np
@@ -37,19 +38,24 @@ def context_maps(stack):
     return np.stack(maps)
 
 
-def run(parts, meta, pix, load_stack, cs="3", leaf=20, trees=100, seeds=2):
+def run(parts, meta, pix, load_stack, cs="3", leaf=20, trees=100, seeds=2, log=None):
+    log = log or (lambda *_: None)
     parts, meta = p4.prep(parts, meta, cs)
     X, y, g = sw.build(parts, meta, "pixel", "raw")
     px = pix.loc[meta.index]
     ctx = np.zeros((len(meta), 16))
     rows, cols = px.row.to_numpy(), px.col.to_numpy()
-    for chip, idx in px.groupby("chip").indices.items():
+    t0, groups = time.time(), px.groupby("chip").indices
+    for i, (chip, idx) in enumerate(groups.items(), 1):
         ctx[idx] = context_maps(load_stack(chip))[:, rows[idx], cols[idx]].T
+        if i % 25 == 0 or i == len(groups):
+            log(f"context features: {i}/{len(groups)} chips, {time.time() - t0:.0f}s")
     out = {}
     for name, M in (("base", X), ("base+context", np.hstack([X, ctx]))):
         r = [sw.score(features.cv_predict(M, y, g, seed=s, trees=trees, leaf=leaf, proba=True), y) for s in range(seeds)]
         out[name] = {k: float(np.mean([x[k] for x in r])) for k in ("f1", "bal", "oa", "auc")}
         out[name]["n_features"] = M.shape[1]
+        log(f"{name}: cross-validation done")
     return out
 
 
@@ -66,7 +72,7 @@ def main():
     parts, meta = sw.load(a.spec)
     pix = pd.read_csv(data / "phase1" / "pixels.csv", dtype={"chip": str})
     load = lambda chip: np.concatenate([cf.dequantise(np.load(data / "phase5" / n / f"{chip}.npy")) for n in (a.asc, a.desc)])
-    res = run(parts, meta, pix, load, a.classes, a.leaf)
+    res = run(parts, meta, pix, load, a.classes, a.leaf, log=print)
     b, c = res["base"], res["base+context"]
     verdict = "ADOPT" if c["f1"] - b["f1"] >= 0.02 and c["auc"] >= b["auc"] else "no"
     for k, r in res.items():
