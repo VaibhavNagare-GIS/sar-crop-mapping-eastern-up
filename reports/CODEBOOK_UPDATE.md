@@ -25,6 +25,7 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | `src/p6_densecv.py` | Map-level cross-validation on train chips: pixel, smoothing, grid, superpixel vote, superpixel Random Forest, true-field upper bound | `data/phase6/densecv.csv` |
 | `src/p5_chip_features.py`, `p5_dense_table.py` | `--orbit DESC_165` or `ASC_158` downloads and tabulates an extra orbit on the chips that have at least 18 scenes of it | `data/phase5/dense_<orbit>_mt2/`, `data/phase2/dense_<orbit>_mt2/` |
 | `src/run_8.py` | Runbook: third orbit, two-orbit against three-orbit on the same pixels | |
+| `src/p6_extra_train.py` | Adds labelled pixels of the `_far` set to every training fold and scores only study blocks | `data/phase6/extra_train.csv` |
 
 ## Results of the training-data experiments (pixel level, 3 classes, block-wise CV)
 | Experiment | Result |
@@ -34,4 +35,5 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | Local mean, standard deviation and entropy | F1 0.596 against 0.590, AUC 0.815 against 0.811 |
 | Voting over objects (labelled pixels only, `p6_objects.py`) | pixel 0.589 to superpixels 0.618 to 0.629. Superseded: the vote ignored unlabelled pixels and the superpixels were square tiles |
 | Map-level CV, 367 chips (`p6_densecv.py`) | pixel 0.584 (AUC 0.812); 3, 5, 7 pixel mean filter 0.602, 0.609, 0.608; 8 x 8 blocks 0.549; true-field vote 0.678 |
+| Superpixels from the Sentinel-2 snapshot (`p6_densecv.py`) | variance explained beyond a grid 0.42 (25 px, compactness 0.1) and 0.05 (compactness 0.5, a plain grid); best F1 0.580, below the 5 x 5 mean filter (0.609) |
 | Third orbit (`run_8.py`) | DESC_165: 0.606 to 0.620 (222 chips); ASC_158: 0.544 to 0.547 (163 chips); not adopted |
