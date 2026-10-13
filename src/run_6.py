@@ -1,4 +1,4 @@
-"""Runbook for the accuracy experiments on training data (objects and class weights). Stops at the first failure.
+"""Runbook for the accuracy experiments on training data (class weights, map-level cross-validation). Stops at the first failure.
 Usage: python src/run_6.py [--dry]"""
 import sys
 
@@ -8,7 +8,7 @@ FIELD = "data/phase2/2021-10-01+data/phase2/2021-10-01_desc"
 DENSE = "data/phase2/dense_asc_mt2+data/phase2/dense_desc_mt2"
 STEPS = [["p6_weights.py", FIELD, "--level", "field", "--leaf", "10"],
          ["p6_weights.py", DENSE, "--level", "pixel", "--leaf", "20"],
-         ["p6_objects.py", DENSE]]
+         ["p6_densecv.py"]]
 
 
 def main(argv):

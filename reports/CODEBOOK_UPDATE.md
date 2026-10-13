@@ -16,7 +16,7 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | `src/p5_chip_features.py` | Dense Sentinel-1 stacks per chip (`parity`, `download`, option `--set`) | `data/phase5<set>/dense_<pass>_mt<k>/<chip>.npy` |
 | `src/p5_dense_table.py` | Training table taken from the dense stacks | `data/phase2/dense_<pass>_mt<k><set>/features.csv` |
 | `src/p6_weights.py` | Class weights on probabilities, scored on held-out blocks | `data/phase3/weights_<level>.json` |
-| `src/p6_objects.py` | Pixel vs true field vs superpixel objects; `--smoke` for a quick real-data check | `data/phase6/objects.csv` |
+| `src/p6_objects.py` | Superseded by `p6_densecv.py`; kept for reference | `data/phase6/objects.csv` |
 | `src/p6_context.py` | Local mean, standard deviation and entropy features | `data/phase6/context.csv` |
 | `src/p1_orbit_summary.py` | Chips covered by each Sentinel-1 orbit and orbit combination | printed |
 | `src/p1_pixels.py`, `p1_coverage.py` | `--set _near` or `--set _far` builds an evaluation set from cells never used for training | `data/phase1<set>/` |
@@ -32,4 +32,6 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | Dense features against sampled features | F1 0.590 against 0.587, AUC 0.811 against 0.810 |
 | Class weights on probabilities | held-out gain -0.003 (field) and -0.004 (pixel) |
 | Local mean, standard deviation and entropy | F1 0.596 against 0.590, AUC 0.815 against 0.811 |
-| Voting over objects (labelled pixels only) | pixel 0.589; superpixels of 15, 30, 60 px 0.618, 0.625, 0.629; true fields 0.684 |
+| Voting over objects (labelled pixels only, `p6_objects.py`) | pixel 0.589 to superpixels 0.618 to 0.629. Superseded: the vote ignored unlabelled pixels and the superpixels were square tiles |
+| Map-level CV, 367 chips (`p6_densecv.py`) | pixel 0.584 (AUC 0.812); 3, 5, 7 pixel mean filter 0.602, 0.609, 0.608; 8 x 8 blocks 0.549; true-field vote 0.678 |
+| Third orbit (`run_8.py`) | DESC_165: 0.606 to 0.620 (222 chips); ASC_158: 0.544 to 0.547 (163 chips); not adopted |

@@ -1,4 +1,5 @@
-"""Phase 6a: does grouping pixels into objects help? TRAIN fields only, out-of-fold pixel probabilities.
+"""Phase 6a (superseded by p6_densecv.py): does grouping pixels into objects help? TRAIN fields only, out-of-fold pixel probabilities.
+Kept for reference. Its vote used labelled pixels only, which is optimistic, and superpixels built from the Sentinel-1 stack behaved like square tiles.
 python src/p6_objects.py SPEC [--asc dense_asc_mt2 --desc dense_desc_mt2] [--leaf 20] [--sizes 15,30,60] [--compactness 0.5,2]
 SPEC = dense feature folders (data/phase2/dense_*); the stacks come from data/phase5/.
 Variants: pixel (no objects), field (true field ids: an upper bound, since a real map has no field boundaries),
