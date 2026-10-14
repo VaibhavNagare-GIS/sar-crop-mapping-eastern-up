@@ -20,6 +20,7 @@ from scipy.ndimage import uniform_filter
 from sklearn.model_selection import GroupKFold
 
 import features
+import nnprep
 import p3_sweep as sw
 import p4_final as p4
 import p5_chip_features as cf
@@ -76,8 +77,7 @@ def run(parts, meta, pix, load_stack, load_z=None, leaf_pixel=20, leaf_obj=10, t
     yi = np.searchsorted(CLASSES, y)
     px = pix.loc[meta.index]
     chip_of, field_of = px.chip.to_numpy(), meta.field.to_numpy()
-    chips = np.array(sorted(set(chip_of)))
-    block = px.groupby("chip").block.agg(lambda s: s.mode().iloc[0]).loc[chips].to_numpy()
+    chips, block = nnprep.chip_blocks(chip_of, px.block.to_numpy())
     n_splits = min(n_splits, len(set(block)))
     if n_splits < 2:
         raise SystemExit("need labelled chips from at least two spatial blocks")

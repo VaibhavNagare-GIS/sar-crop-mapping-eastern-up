@@ -27,6 +27,10 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | `src/run_8.py` | Runbook: third orbit, two-orbit against three-orbit on the same pixels | |
 | `src/p6_extra_train.py` | Adds labelled pixels of the `_far` set to every training fold and scores only study blocks | `data/phase6/extra_train.csv` |
 
+| `src/nnprep.py`, `src/p7_nn.py` | TempCNN and a small U-Net on the dense chips (GPU machine; folds and scoring as in `p6_densecv.py`) | `data/phase7/nn.csv` |
+| `src/p7_map.py` | Final Random Forest, 5 x 5 smoothed class and confidence GeoTIFFs per chip, probabilities at labelled pixels | `data/phase7/map<set>/`, `labelled<set>.csv`, `results/FINAL_CONFIG.json` |
+| `src/p7_eval.py` | Scores the final map with field-level bootstrap intervals (study test fields as a second look, `_near`, `_far`) | `results/final_<name>.json`, confusion CSVs |
+
 ## Results of the training-data experiments (pixel level, 3 classes, block-wise CV)
 | Experiment | Result |
 |---|---|
@@ -36,4 +40,6 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | Voting over objects (labelled pixels only, `p6_objects.py`) | pixel 0.589 to superpixels 0.618 to 0.629. Superseded: the vote ignored unlabelled pixels and the superpixels were square tiles |
 | Map-level CV, 367 chips (`p6_densecv.py`) | pixel 0.584 (AUC 0.812); 3, 5, 7 pixel mean filter 0.602, 0.609, 0.608; 8 x 8 blocks 0.549; true-field vote 0.678 |
 | Superpixels from the Sentinel-2 snapshot (`p6_densecv.py`) | variance explained beyond a grid 0.42 (25 px, compactness 0.1) and 0.05 (compactness 0.5, a plain grid); best F1 0.580, below the 5 x 5 mean filter (0.609) |
+| Far-region pixels as extra training (`p6_extra_train.py`) | base 0.590; far added 0.576; far at weight 0.3 0.593 (AUC 0.811); not adopted |
+| Pre-sowing and post-survey windows added to the Rabi windows, field level, ascending only (`p3_sweep.py`) | 0.586 to 0.595, 0.599, 0.599 (AUC 0.811 to 0.820); not adopted |
 | Third orbit (`run_8.py`) | DESC_165: 0.606 to 0.620 (222 chips); ASC_158: 0.544 to 0.547 (163 chips); not adopted |
