@@ -15,7 +15,7 @@ WC = {10: "Tree cover", 20: "Shrubland", 30: "Grassland", 40: "Cropland", 50: "B
 def coverage(pix, wc_of_chip):
     """pix: chip, row, col, crop. wc_of_chip(chip) -> (h, w) class codes. Returns a crop x WorldCover-class table of row shares (%) and the counts."""
     parts = [pd.DataFrame({"crop": g.crop.to_numpy(), "wc": wc_of_chip(c)[g.row.to_numpy(), g.col.to_numpy()]}) for c, g in pix.groupby("chip")]
-    df = pd.concat(parts)
+    df = pd.concat(parts, ignore_index=True)
     df["wc"] = df.wc.map(lambda v: WC.get(int(v), f"class {int(v)}"))
     return (pd.crosstab(df.crop, df.wc, normalize="index") * 100).round(1), df.crop.value_counts()
 

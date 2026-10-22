@@ -1,0 +1,6 @@
+crop,pixels,Bare / sparse,Built-up,Cropland,Grassland,Shrubland,Tree cover,Water,Wetland
+Lentil,2334,0.0,0.0,86.9,7.7,0.4,4.5,0.4,0.0
+Mustard,12431,0.0,0.6,85.2,2.4,0.2,11.6,0.0,0.0
+No crop/Fallow,6234,0.4,0.4,82.3,4.2,0.3,12.2,0.1,0.0
+Sugarcane,5020,0.0,0.4,83.0,0.8,0.2,15.5,0.0,0.0
+Wheat,40517,0.0,0.2,90.2,1.8,0.1,7.7,0.0,0.0

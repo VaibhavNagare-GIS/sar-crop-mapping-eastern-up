@@ -74,7 +74,7 @@ wc[0, :] = 50
 c4 = np.arange(16, dtype=np.uint8).reshape(4, 4) % 3 + 1
 assert (mp.apply_mask(c4, wc)[0] == 0).all() and (mp.apply_mask(c4, wc)[1:] == c4[1:]).all()
 import p7_mask_check as mc
-pxm = pd.DataFrame(dict(chip="a", row=[0, 1, 2, 3], col=[0, 1, 2, 3], crop=["Wheat", "Wheat", "Sugarcane", "Sugarcane"]))
+pxm = pd.DataFrame(dict(chip=["a", "a", "b", "b"], row=[0, 1, 2, 3], col=[0, 1, 2, 3], crop=["Wheat", "Wheat", "Sugarcane", "Sugarcane"]))
 tab, cnt = mc.coverage(pxm, lambda chip: wc)
 assert tab.loc["Wheat", "Cropland"] == 50.0 and tab.loc["Wheat", "Built-up"] == 50.0 and tab.loc["Sugarcane", "Cropland"] == 100.0 and cnt["Wheat"] == 2
 print("SELFTEST OK")
