@@ -29,7 +29,13 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 
 | `src/nnprep.py`, `src/p7_nn.py` | TempCNN and a small U-Net on the dense chips (GPU machine; folds and scoring as in `p6_densecv.py`) | `data/phase7/nn.csv` |
 | `src/p7_map.py` | Final Random Forest, 5 x 5 smoothed class and confidence GeoTIFFs per chip, probabilities at labelled pixels | `data/phase7/map<set>/`, `labelled<set>.csv`, `results/FINAL_CONFIG.json` |
+| `src/run_9.py` | Runbook: Sentinel-2 NDVI on the dense chips (`pilot`, `download`, `build`, `compare`, option `--set`) | `data/phase5<set>/dense_s2/`, `data/phase2/dense_s2<set>/` |
+| `src/p7_mask_check.py` | Share of labelled pixels inside ESA WorldCover 2021 Cropland (class 40) per surveyed crop; needs `dense_wc` from `p5_chip_features.py download --sensor wc` | `results/mask_coverage<set>.csv` |
+| `src/p7_mask_check.py` | Share of labelled pixels inside ESA WorldCover 2021 Cropland (code 40), per surveyed crop | `results/mask_coverage<set>.csv` |
+| `src/p5_chip_features.py --sensor wc` | Downloads WorldCover class codes per chip (uint8) | `data/phase5<set>/dense_wc/` |
 | `src/p7_eval.py` | Scores the final map with field-level bootstrap intervals (study test fields as a second look, `_near`, `_far`) | `results/final_<name>.json`, confusion CSVs |
+
+Final map on the study test fields (second look, 3 classes, 412 fields): raw pixel F1 0.525 (AUC 0.786), 5 x 5 smoothed F1 0.525 (AUC 0.799, OA 0.671 against an always-wheat 0.675), smoothed field average F1 0.530 (AUC 0.828).
 
 ## Results of the training-data experiments (pixel level, 3 classes, block-wise CV)
 | Experiment | Result |
@@ -43,3 +49,5 @@ Notes: window i of folder `<start>` covers `<start> + 12 i` days (end exclusive;
 | Far-region pixels as extra training (`p6_extra_train.py`) | base 0.590; far added 0.576; far at weight 0.3 0.593 (AUC 0.811); not adopted |
 | Pre-sowing and post-survey windows added to the Rabi windows, field level, ascending only (`p3_sweep.py`) | 0.586 to 0.595, 0.599, 0.599 (AUC 0.811 to 0.820); not adopted |
 | Third orbit (`run_8.py`) | DESC_165: 0.606 to 0.620 (222 chips); ASC_158: 0.544 to 0.547 (163 chips); not adopted |
+
+`p7_map.py --mask` also writes `<chip>_class_masked.tif` (class 0 where WorldCover is not Cropland). `p5_chip_features.py --sensor wc` stores WorldCover codes (uint8) in `dense_wc/`.

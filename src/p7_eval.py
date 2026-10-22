@@ -1,5 +1,5 @@
 """Phase 7b: score the final map at labelled pixels, with field-level bootstrap intervals.
-python src/p7_eval.py [--set _near|_far] [--boot 2000]
+python src/p7_eval.py [--set _near|_far] [--tag _fused] [--boot 2000]
 Study block: the TEST fields (a second look at them: the first look was the frozen Random Forest, so this is not pre-registered). _near and _far: every
 field of the set (never used for training). Reads data/phase7/labelled<set>.csv from p7_map.py. Macro scores average over the classes that occur in
 the evaluated fields (Sugarcane is absent from _far), while predictions of an absent class still count as errors for the others.
@@ -60,6 +60,7 @@ def evaluate(df, boot=2000, seed=0):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--set", dest="set_", default="", choices=["", "_near", "_far"])
+    ap.add_argument("--tag", default="", choices=["", "_fused"])
     ap.add_argument("--boot", type=int, default=2000)
     ap.add_argument("--data", default="data")
     ap.add_argument("--out", default="results")
@@ -67,13 +68,13 @@ def main():
     data = Path(a.data)
     pix = pd.read_csv(data / f"phase1{a.set_}" / "pixels.csv", dtype={"chip": str})
     pix["pid"] = pix.index
-    lab = pd.read_csv(data / "phase7" / f"labelled{a.set_}.csv", index_col="pid")
+    lab = pd.read_csv(data / "phase7" / f"labelled{a.tag}{a.set_}.csv", index_col="pid").dropna()
     df = pix.set_index("pid").join(lab, how="inner")
     df = df[df.label != 4]
     df["label"] = df.label.where(df.label != 3, 2)
     if not a.set_:
         df = df[df.split == "test"]
-    name = {"": "test", "_near": "near", "_far": "far"}[a.set_]
+    name = a.tag.strip("_") + ("_" if a.tag else "") + {"": "test", "_near": "near", "_far": "far"}[a.set_]
     res, cms = evaluate(df, a.boot)
     res["second_look"] = not a.set_
     out = Path(a.out)

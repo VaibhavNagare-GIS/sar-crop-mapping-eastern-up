@@ -78,4 +78,9 @@ assert min(shifts, key=shifts.get) == (0, 0) and shifts[(1, 0)] > 0.1
 assert p5.stats(np.array([1.0]), np.array([1.0])) is None
 xs, ys = zip(*[p5.paired(D, csv, r, c) for _ in range(2)])
 assert abs(p5.stats(np.concatenate(xs), np.concatenate(ys))["r"] - 1) < 1e-6
+# NDVI is stored with a finer scale than dB
+nd = np.array([[-0.5, 0.1234, np.nan, 0.9999]], dtype=np.float32)
+qn = p5.quantise(nd, 10000)
+assert qn.dtype == np.int16 and qn[0, 2] == p5.NO and np.allclose(p5.dequantise(qn, 10000)[0, [0, 1, 3]], nd[0, [0, 1, 3]], atol=1e-4)
+assert len(p5.NAMES_S2) == 20 and p5.NAMES_S2[0] == "NDVI_00"
 print("SELFTEST OK")

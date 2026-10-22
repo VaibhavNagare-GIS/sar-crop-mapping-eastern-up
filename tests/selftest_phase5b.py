@@ -29,6 +29,14 @@ with tempfile.TemporaryDirectory() as d:
     assert list(out.pid) == [0, 1, 2] and (out.orbit == "ASC_56").all()
     for _, r in out.iterrows():
         assert np.allclose(r[cf.NAMES].to_numpy(float), stacks[r.chip][:, r.row, r.col], equal_nan=True)
+    # Sentinel-2 table: NDVI columns, scale 10000, every chip
+    (d / "phase5" / "dense_s2").mkdir()
+    for c in "ab":
+        x = rng.uniform(0.1, 0.9, (20, 8, 9)).astype("float32")
+        x[3, 1, 4] = np.nan
+        np.save(d / "phase5" / "dense_s2" / f"{c}.npy", cf.quantise(x, 10000))
+    o2 = dt.build(d, "asc", 2, "", None, "s2")
+    assert list(o2.columns[-20:]) == cf.NAMES_S2 and (o2.orbit == "S2").all() and len(o2) == 3 and np.isnan(o2.loc[o2.chip == "a", "NDVI_03"]).sum() <= 1
     # an extra set reads and writes its own folders
     import shutil
     shutil.copytree(d / "phase1", d / "phase1_x")

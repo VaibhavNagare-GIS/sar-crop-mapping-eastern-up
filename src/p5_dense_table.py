@@ -11,20 +11,22 @@ import pandas as pd
 import p5_chip_features as cf
 
 
-def build(data, pass_, mt, set_="", orbit=None):
+def build(data, pass_, mt, set_="", orbit=None, sensor="s1"):
     data = Path(data)
     pix = pd.read_csv(data / f"phase1{set_}" / "pixels.csv", dtype={"chip": str})
     pix["pid"] = pix.index
-    orb = cf.orbit_table(data, pass_, set_, orbit)
-    src = data / f"phase5{set_}" / f"dense_{orbit or pass_}_mt{mt}"
+    s2 = sensor == "s2"
+    orb = pd.DataFrame({"orbit": "S2"}, index=pix.chip.unique()) if s2 else cf.orbit_table(data, pass_, set_, orbit)
+    names, scale = (cf.NAMES_S2, 10000) if s2 else (cf.NAMES, 100)
+    src = data / f"phase5{set_}" / ("dense_s2" if s2 else f"dense_{orbit or pass_}_mt{mt}")
     missing = [c for c in pix.chip.unique() if c in orb.index and not (src / f"{c}.npy").exists()]
     if missing:
         raise SystemExit(f"{len(missing)} chips are not downloaded yet (first: {missing[0]}); run p5_chip_features.py download")
     pix = pix[pix.chip.isin(orb.index)]
     parts = []
     for chip, g in pix.groupby("chip"):
-        arr = cf.dequantise(np.load(src / f"{chip}.npy"))
-        parts.append(pd.DataFrame(arr[:, g.row.to_numpy(), g.col.to_numpy()].T, columns=cf.NAMES, index=g.index))
+        arr = cf.dequantise(np.load(src / f"{chip}.npy"), scale)
+        parts.append(pd.DataFrame(arr[:, g.row.to_numpy(), g.col.to_numpy()].T, columns=names, index=g.index))
     out = pix.join(pd.concat(parts))
     out.insert(out.columns.get_loc("pid") + 1, "orbit", out.chip.map(orb.orbit))
     return out
@@ -34,12 +36,13 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--pass", dest="pass_", choices=["asc", "desc"], default="asc")
     ap.add_argument("--orbit", default=None)
+    ap.add_argument("--sensor", choices=["s1", "s2"], default="s1")
     ap.add_argument("--mt", type=int, default=2)
     ap.add_argument("--set", dest="set_", default="", choices=sorted(cf.study.SETS))
     ap.add_argument("--data", default="data")
     a = ap.parse_args()
-    df = build(a.data, a.pass_, a.mt, a.set_, a.orbit)
-    dst = Path(a.data) / "phase2" / f"dense_{a.orbit or a.pass_}_mt{a.mt}{a.set_}"
+    df = build(a.data, a.pass_, a.mt, a.set_, a.orbit, a.sensor)
+    dst = Path(a.data) / "phase2" / (f"dense_s2{a.set_}" if a.sensor == "s2" else f"dense_{a.orbit or a.pass_}_mt{a.mt}{a.set_}")
     dst.mkdir(parents=True, exist_ok=True)
     df.to_csv(dst / "features.csv", index=False)
-    print(f"{len(df)} pixels, {int(df[cf.NAMES].isna().all(axis=1).sum())} without any valid window -> {dst / 'features.csv'}")
+    print(f"{len(df)} pixels, {int(df[(cf.NAMES_S2 if a.sensor == 's2' else cf.NAMES)].isna().all(axis=1).sum())} without any valid window -> {dst / 'features.csv'}")

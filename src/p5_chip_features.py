@@ -1,7 +1,9 @@
 """Phase 5a: dense Sentinel-1 feature stacks on each chip's own 10 m grid (for the map and for spatial-context models).
 python p5_chip_features.py parity   --project P [--pass asc|desc] [--mt 2] [--n 3]       compare with the sampled training features
 python p5_chip_features.py download --project P [--pass asc|desc] [--mt 2] [--workers 3 --limit N --set _near] all chips of the study block (or of a --set), resumable
-Output: data/phase5<set>/dense_<pass>_mt<k>/<chip>.npy = int16 (bands, h, w), dB x 100, -32768 = no data, band order VV_00..VV_19, VH_00..VH_19."""
+Output: data/phase5<set>/dense_<pass>_mt<k>/<chip>.npy = int16 (bands, h, w), dB x 100, -32768 = no data, band order VV_00..VV_19, VH_00..VH_19.
+--sensor s2 writes dense_s2/<chip>.npy: NDVI_00..NDVI_19 x 10000 (cloud-masked median per window).
+--sensor wc writes dense_wc/<chip>.npy: uint8 (h, w) ESA WorldCover v200 class codes (40 = Cropland)."""
 import argparse
 import io
 import os
@@ -20,6 +22,7 @@ import p2_extract as pe
 import study
 
 NAMES = [f"{p}_{i:02d}" for p in ("VV", "VH") for i in range(study.N_BINS)]
+NAMES_S2 = [f"NDVI_{i:02d}" for i in range(study.N_BINS)]
 NO = -32768
 
 
@@ -59,12 +62,13 @@ def fetch_chip(ee, img, g, names):
     return out
 
 
-def quantise(x):
-    return np.where(np.isnan(x), NO, np.clip(np.rint(x * 100), -32000, 32000)).astype(np.int16)
+def quantise(x, scale=100):
+    """float -> int16 with NO for missing. scale 100: dB (Sentinel-1); scale 10000: NDVI (Sentinel-2)."""
+    return np.where(np.isnan(x), NO, np.clip(np.rint(x * scale), -32000, 32000)).astype(np.int16)
 
 
-def dequantise(q):
-    return np.where(q == NO, np.nan, q / 100.0).astype(np.float32)
+def dequantise(q, scale=100):
+    return np.where(q == NO, np.nan, q / float(scale)).astype(np.float32)
 
 
 def paired(dense, csv, r, c, shift=(0, 0)):
@@ -150,23 +154,35 @@ def parity(ee, data, pass_, mt, n, start, min_px=100):
     return ok
 
 
-def download(ee, data, pass_, mt, workers, start, limit=0, set_="", orbit=None):
+def lonlat_box(label_tif):
+    from rasterio.warp import transform_bounds
+    with rasterio.open(label_tif) as a:
+        return list(transform_bounds(a.crs, "EPSG:4326", *a.bounds))
+
+
+def download(ee, data, pass_, mt, workers, start, limit=0, set_="", orbit=None, sensor="s1"):
+    """sensor: s1 (dB windows), s2 (NDVI windows) or wc (ESA WorldCover 2021 class codes, uint8)."""
     pix = pd.read_csv(data / f"phase1{set_}" / "pixels.csv", dtype={"chip": str})
-    orb = orbit_table(data, pass_, set_, orbit)
-    chips = sorted(set(pix.chip) & set(orb.index))
+    orb = orbit_table(data, pass_, set_, orbit) if sensor == "s1" else None
+    chips = sorted(set(pix.chip) & set(orb.index)) if sensor == "s1" else sorted(set(pix.chip))
     files = inv.find_chips(data / "train_labels")
-    out = data / f"phase5{set_}" / f"dense_{orbit or pass_}_mt{mt}"
+    out = data / f"phase5{set_}" / {"s2": "dense_s2", "wc": "dense_wc"}.get(sensor, f"dense_{orbit or pass_}_mt{mt}")
     out.mkdir(parents=True, exist_ok=True)
-    imgs = {o: pe.orbit_image(ee, o, start, mt=mt) for o in orb.loc[chips, "orbit"].unique()}
+    imgs = {o: pe.orbit_image(ee, o, start, mt=mt) for o in orb.loc[chips, "orbit"].unique()} if sensor == "s1" else {}
     todo = [c for c in chips if not (out / f"{c}.npy").exists()]
     todo = todo[:limit] if limit else todo
     print(f"{len(chips)} chips, {len(todo)} to do -> {out}")
 
     def one(cid):
         t0 = time.time()
-        D = fetch_chip(ee, imgs[orb.loc[cid, "orbit"]], grid(files[cid][1]), NAMES)
+        if sensor == "s2":
+            D = fetch_chip(ee, pe.s2_image(ee, start, lonlat_box(files[cid][1])), grid(files[cid][1]), NAMES_S2)
+        elif sensor == "wc":
+            D = fetch_chip(ee, ee.ImageCollection("ESA/WorldCover/v200").first().select("Map").unmask(0), grid(files[cid][1]), ["Map"])
+        else:
+            D = fetch_chip(ee, imgs[orb.loc[cid, "orbit"]], grid(files[cid][1]), NAMES)
         tmp = out / f"{cid}.tmp.npy"
-        np.save(tmp, quantise(D))
+        np.save(tmp, D[0].astype(np.uint8) if sensor == "wc" else quantise(D, 10000 if sensor == "s2" else 100))
         os.replace(tmp, out / f"{cid}.npy")
         return cid, float(np.isnan(D).mean()), time.time() - t0
 
@@ -194,6 +210,7 @@ def main():
     ap.add_argument("--n", type=int, default=3)
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--limit", type=int, default=0, help="download only the first N missing chips (for timing and cost checks)")
+    ap.add_argument("--sensor", choices=["s1", "s2", "wc"], default="s1", help="s2: Sentinel-2 NDVI windows (cloud-masked median); wc: ESA WorldCover 2021 class codes")
     ap.add_argument("--orbit", default=None, help="use one named orbit (for example DESC_165) on the chips that have it")
     ap.add_argument("--set", dest="set_", default="", choices=sorted(study.SETS))
     ap.add_argument("--start", default=study.SEASON_START)
@@ -203,7 +220,7 @@ def main():
     ee = study.gee_init(a.project)
     if a.what == "parity":
         raise SystemExit(0 if parity(ee, Path(a.data), a.pass_, a.mt, a.n, a.start) else 1)
-    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit, a.set_, a.orbit)
+    download(ee, Path(a.data), a.pass_, a.mt, a.workers, a.start, a.limit, a.set_, a.orbit, a.sensor)
 
 
 if __name__ == "__main__":

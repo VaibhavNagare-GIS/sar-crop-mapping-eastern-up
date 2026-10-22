@@ -31,13 +31,33 @@ SIZES, COMPACT, GRID, SMOOTH = (25, 60), (0.1, 0.5), 8, (3, 5, 7)
 MIN_LABELLED, MIN_PURITY = 5, 0.7  # an object is a training sample if it has this many labelled pixels and this label share
 
 
-def dense_features(stack):
-    """(bands, h, w) stack of asc then desc windows -> (h*w, F), the same features as the training table."""
-    blocks = []
-    for s in range(stack.shape[0] // 40):
-        df = pd.DataFrame(stack[s * 40:(s + 1) * 40].reshape(40, -1).T, columns=cf.NAMES)
-        blocks.append(features.make_X(df, "raw")[0])
-    return np.nan_to_num(np.hstack(blocks))
+def block_features(arr, names):
+    """arr: (len(names), n) values of one sensor block (VV and VH windows, or NDVI windows) -> (n, F) features and a validity mask.
+    A pixel with no valid window in some series (outside the scene, or cloudy all season) cannot be interpolated: its features are zeros and it is marked invalid."""
+    df = pd.DataFrame(arr.T, columns=names)
+    ok = np.ones(len(df), bool)
+    for pre in {c[:2] for c in names}:
+        ok &= np.isfinite(df[[c for c in names if c[:2] == pre]].to_numpy()).any(axis=1)
+    width = features.make_X(pd.DataFrame(np.zeros((2, len(names))), columns=names), "raw")[0].shape[1]
+    X = np.zeros((len(df), width))
+    if ok.any():
+        X[ok] = features.make_X(df[ok], "raw")[0]
+    return X, ok
+
+
+def dense_features(stack, return_valid=False):
+    """(bands, h, w) stack of asc then desc windows -> (h*w, F), the same features as the training table. Invalid pixels get zeros."""
+    out = [block_features(stack[s * 40:(s + 1) * 40].reshape(40, -1), cf.NAMES) for s in range(stack.shape[0] // 40)]
+    X, ok = np.hstack([o[0] for o in out]), np.logical_and.reduce([o[1] for o in out])
+    X = np.nan_to_num(X)
+    return (X, ok) if return_valid else X
+
+
+def fused_features(stack, ndvi):
+    """Sentinel-1 features plus Sentinel-2 NDVI features; a pixel is valid only if both are."""
+    X1, v1 = dense_features(stack, True)
+    X2, v2 = block_features(ndvi.reshape(ndvi.shape[0], -1), features.ndvi_cols())
+    return np.hstack([X1, np.nan_to_num(X2)]), v1 & v2
 
 
 def means_by(values, seg, n):

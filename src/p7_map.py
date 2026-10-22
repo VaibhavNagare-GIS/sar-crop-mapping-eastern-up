@@ -1,10 +1,11 @@
 """Phase 7a: the final pixel model and the map.
-python src/p7_map.py [--set _near|_far] [--limit-chips N] [--retrain]
+python src/p7_map.py [--set _near|_far] [--fused] [--mask] [--limit-chips N] [--retrain]
 Trains a Random Forest on every TRAIN pixel of the study block (dense Sentinel-1 features, 3 classes), predicts every pixel of every chip of
 the chosen set, smooths the class probabilities with a 5 x 5 mean filter, and writes per chip: <chip>_class.tif (1 Wheat, 2 Mustard/Lentil,
 6 Sugarcane, 0 none) and <chip>_conf.tif (largest probability x 255) under data/phase7/map<set>/. It also writes data/phase7/labelled<set>.csv with the
 raw and smoothed probabilities at every labelled pixel, which p7_eval.py scores. Settings are recorded in results/FINAL_CONFIG.json the first time and
-must not change silently afterwards. Chips of the _far set whose ascending slot holds a descending orbit are skipped."""
+must not change silently afterwards. Chips of the _far set whose ascending slot holds a descending orbit are skipped. Pixels without usable data (outside the scene, or without any valid window) get code 0.
+--fused adds Sentinel-2 NDVI (a companion layer; the Sentinel-1 map stays the primary product) and writes map_fused<set>/ and labelled_fused<set>.csv."""
 import argparse
 import datetime as dt
 import json
@@ -37,16 +38,31 @@ def train_final(parts, meta, leaf, trees, seed):
     return features.make_model("rf", leaf, trees, seed).fit(X, np.searchsorted(CLASSES, y)), len(y)
 
 
-def predict_maps(model, stack):
-    """(bands, h, w) stack -> raw and smoothed class-probability maps (h, w, 3)."""
+def predict_maps(model, stack, ndvi=None):
+    """(bands, h, w) stack (and optional (20, h, w) NDVI) -> raw and smoothed class-probability maps (h, w, 3) and the validity mask.
+    Pixels with no usable data are invalid: they are left out of the smoothing instead of spreading zeros or NaN."""
     h, w = stack.shape[1:]
-    raw = model.predict_proba(dc.dense_features(stack)).reshape(h, w, -1)
-    return raw, uniform_filter(raw, size=(SMOOTH, SMOOTH, 1), mode="nearest")
+    X, ok = dc.fused_features(stack, ndvi) if ndvi is not None else dc.dense_features(stack, True)
+    raw = np.zeros((h * w, len(CLASSES)))
+    if ok.any():
+        raw[ok] = model.predict_proba(X[ok])
+    raw, v = raw.reshape(h, w, -1), ok.reshape(h, w)
+    den = uniform_filter(v.astype(float), size=SMOOTH, mode="nearest")[..., None]
+    sm = np.where(den > 0, uniform_filter(raw, size=(SMOOTH, SMOOTH, 1), mode="nearest") / np.maximum(den, 1e-9), 0.0)
+    return raw, sm, v
 
 
-def class_conf(p):
-    """Probability map -> class codes (uint8) and confidence (largest probability x 255, uint8)."""
-    return CLASSES[p.argmax(-1)].astype(np.uint8), np.rint(p.max(-1) * 255).astype(np.uint8)
+def class_conf(p, valid=None):
+    """Probability map -> class codes (uint8, 0 where invalid) and confidence (largest probability x 255, uint8)."""
+    cls, conf = CLASSES[p.argmax(-1)].astype(np.uint8), np.rint(p.max(-1) * 255).astype(np.uint8)
+    if valid is not None:
+        cls[~valid], conf[~valid] = 0, 0
+    return cls, conf
+
+
+def apply_mask(cls, wc):
+    """Class codes with 0 wherever ESA WorldCover (2021) is not Cropland (code 40)."""
+    return np.where(wc == 40, cls, 0).astype(np.uint8)
 
 
 def write_tif(path, arr, label_tif):
@@ -83,21 +99,24 @@ def main():
     ap.add_argument("--leaf", type=int, default=20)
     ap.add_argument("--trees", type=int, default=500)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--fused", action="store_true", help="add Sentinel-2 NDVI (needs dense_s2); outputs get the tag _fused")
+    ap.add_argument("--mask", action="store_true", help="also write <chip>_class_masked.tif using the WorldCover cropland mask (needs dense_wc)")
     ap.add_argument("--limit-chips", type=int, default=0)
     ap.add_argument("--retrain", action="store_true")
     ap.add_argument("--data", default="data")
     a = ap.parse_args()
     data = Path(a.data)
-    record_config(Path("results") / "FINAL_CONFIG.json", dict(leaf=a.leaf, trees=a.trees, seed=a.seed, smooth=SMOOTH, classes="3",
-                                                              features="dense_asc_mt2 + dense_desc_mt2, raw windows plus VH-VV"))
-    mp = data / "phase7" / "model_rf.joblib"
+    tag = "_fused" if a.fused else ""
+    record_config(Path("results") / f"FINAL_CONFIG{tag}.json", dict(leaf=a.leaf, trees=a.trees, seed=a.seed, smooth=SMOOTH, classes="3",
+                                                                    features="dense_asc_mt2 + dense_desc_mt2" + (" + dense_s2 NDVI" if a.fused else "") + ", raw windows plus VH-VV"))
+    mp = data / "phase7" / f"model_rf{tag}.joblib"
     mp.parent.mkdir(parents=True, exist_ok=True)
     import joblib
     if mp.exists() and not a.retrain:
         model = joblib.load(mp)
         print(f"loaded {mp}")
     else:
-        parts, meta = sw.load(f"{data / 'phase2' / 'dense_asc_mt2'}+{data / 'phase2' / 'dense_desc_mt2'}")
+        parts, meta = sw.load("+".join(str(data / "phase2" / n) for n in (["dense_asc_mt2", "dense_desc_mt2"] + (["dense_s2"] if a.fused else []))))
         t0 = time.time()
         model, n = train_final(parts, meta, a.leaf, a.trees, a.seed)
         joblib.dump(model, mp, compress=3)
@@ -106,7 +125,7 @@ def main():
     pix = pd.read_csv(data / f"phase1{a.set_}" / "pixels.csv", dtype={"chip": str})
     pix["pid"] = pix.index
     have = lambda n: {p.stem for p in (data / f"phase5{a.set_}" / n).glob("*.npy")}
-    chips = sorted(set(pix.chip) & have("dense_asc_mt2") & have("dense_desc_mt2"))
+    chips = sorted(set(pix.chip) & have("dense_asc_mt2") & have("dense_desc_mt2") & (have("dense_s2") if a.fused else set(pix.chip)) & (have("dense_wc") if a.mask else set(pix.chip)))
     if a.set_:
         asc = cf.orbit_table(data, "asc", a.set_)
         ok = set(asc.index[asc.orbit.str.startswith("ASC")])
@@ -115,24 +134,30 @@ def main():
     if a.limit_chips:
         chips = chips[:a.limit_chips]
     files = inv.find_chips(data / "train_labels")
-    out = data / "phase7" / f"map{a.set_}"
+    out = data / "phase7" / f"map{tag}{a.set_}"
     out.mkdir(parents=True, exist_ok=True)
-    rows, t1 = [], time.time()
+    rows, t1, no_data = [], time.time(), 0
     for i, c in enumerate(chips, 1):
         stack = np.concatenate([cf.dequantise(np.load(data / f"phase5{a.set_}" / n / f"{c}.npy")) for n in ("dense_asc_mt2", "dense_desc_mt2")])
-        raw, sm = predict_maps(model, stack)
-        cls, conf = class_conf(sm)
+        ndvi = cf.dequantise(np.load(data / f"phase5{a.set_}" / "dense_s2" / f"{c}.npy"), 10000) if a.fused else None
+        raw, sm, valid = predict_maps(model, stack, ndvi)
+        cls, conf = class_conf(sm, valid)
         write_tif(out / f"{c}_class.tif", cls, files[c][1])
         write_tif(out / f"{c}_conf.tif", conf, files[c][1])
+        if a.mask:
+            write_tif(out / f"{c}_class_masked.tif", apply_mask(cls, np.load(data / f"phase5{a.set_}" / "dense_wc" / f"{c}.npy")), files[c][1])
         px = pix[pix.chip == c]
         r, q = px.row.to_numpy(), px.col.to_numpy()
-        rows.append(pd.DataFrame(np.hstack([raw[r, q], sm[r, q]]), index=px.pid, columns=[f"raw{k}" for k in CLASSES] + [f"sm{k}" for k in CLASSES]))
+        vals = np.hstack([raw[r, q], sm[r, q]])
+        vals[~valid[r, q]] = np.nan                                        # labelled pixels without data are not scored
+        rows.append(pd.DataFrame(vals, index=px.pid, columns=[f"raw{k}" for k in CLASSES] + [f"sm{k}" for k in CLASSES]))
+        no_data += int((~valid[r, q]).sum())
         if i % 25 == 0 or i == len(chips):
             print(f"{i}/{len(chips)} chips, {time.time() - t1:.0f}s, about {(time.time() - t1) / i * (len(chips) - i) / 60:.1f} min left")
     lab = pd.concat(rows)
     lab.index.name = "pid"
-    lab.to_csv(data / "phase7" / f"labelled{a.set_}.csv")
-    print(f"wrote {len(chips)} chips to {out} and {len(lab)} labelled pixels to labelled{a.set_}.csv")
+    lab.to_csv(data / "phase7" / f"labelled{tag}{a.set_}.csv")
+    print(f"wrote {len(chips)} chips to {out} and {len(lab)} labelled pixels to labelled{tag}{a.set_}.csv ({no_data} labelled pixels had no data and are not scored)")
 
 
 if __name__ == "__main__":
