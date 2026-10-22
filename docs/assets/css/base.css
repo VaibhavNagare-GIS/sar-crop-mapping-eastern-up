@@ -1,0 +1,50 @@
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: var(--nav-h); -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 var(--fs-body) / 1.6 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; }
+h1, h2, h3, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+a { color: inherit; }
+:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+
+.wrap { width: min(70rem, 100% - 2 * var(--gutter)); margin-inline: auto; }
+.skip {
+  position: absolute; left: var(--gutter); top: -4rem; z-index: 100;
+  padding: var(--sp-1) var(--sp-2); background: var(--ink); color: var(--paper); border-radius: 999px;
+}
+.skip:focus { top: var(--sp-1); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 3rem; padding: 0 1.5rem; border-radius: 999px;
+  font-weight: 700; text-decoration: none;
+  transition: transform 0.25s var(--ease-out), background-color 0.25s, box-shadow 0.25s;
+}
+.btn:hover { transform: translateY(-2px); }
+.btn:active { transform: translateY(0); }
+.btn--primary { background: var(--mustard); color: var(--ink); box-shadow: 0 3px 0 var(--mustard-deep); }
+.btn--primary:hover { background: #f7cf55; box-shadow: 0 5px 0 var(--mustard-deep); }
+.btn--ghost { box-shadow: inset 0 0 0 2px var(--ink); }
+.btn--ghost:hover { background: var(--ink); color: var(--paper); }
+
+.nav {
+  position: fixed; inset: 0 0 auto 0; z-index: 50; height: var(--nav-h);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+.nav.is-solid { background: var(--paper); box-shadow: 0 1px 0 rgba(27, 58, 51, 0.14); }
+.nav__inner { height: 100%; display: flex; align-items: center; justify-content: space-between; }
+.brand { display: inline-flex; align-items: center; gap: 0.625rem; text-decoration: none; font: 400 var(--fs-lead) / 1 var(--font-display); }
+.brand svg { width: 2rem; height: 2rem; transition: transform 0.5s var(--ease-out); }
+.brand:hover svg { transform: rotate(-12deg) scale(1.06); }
+.nav__links { display: flex; gap: 0.25rem; }
+.nav__links a {
+  padding: 0.5rem 1rem; border-radius: 999px; text-decoration: none; font-weight: 700;
+  transition: background-color 0.25s;
+}
+.nav__links a:hover { background: rgba(242, 194, 48, 0.45); }

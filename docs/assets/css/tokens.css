@@ -1,0 +1,31 @@
+:root {
+  --sky: #eaf5fa;
+  --paper: #f6faf2;
+  --ink: #1b3a33;
+  --leaf: #3f8f3a;
+  --mustard: #f2c230;
+  --mustard-deep: #e0a800;
+  --sun: #f2a33a;
+  --soil: #412413;
+  --night: #0f1f4d;
+
+  --font-display: "Bagel Fat One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+
+  --fs-small: 0.875rem;
+  --fs-body: 1.0625rem;
+  --fs-lead: 1.3125rem;
+  --fs-h2: clamp(1.75rem, 1.2rem + 2vw, 2.75rem);
+  --fs-h1: clamp(2.5rem, 1.5rem + 3.6vw, 4.25rem);
+
+  --sp-1: 0.5rem;
+  --sp-2: 1rem;
+  --sp-3: 1.5rem;
+  --sp-4: 2.5rem;
+  --sp-5: 4rem;
+  --sp-6: 7rem;
+
+  --gutter: clamp(1.25rem, 4vw, 3rem);
+  --nav-h: 4.25rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
