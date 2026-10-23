@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Field Echoes: crop mapping from radar in Eastern Uttar Pradesh</title>
+  <title>Rabi Radar: crop mapping from radar in Eastern Uttar Pradesh</title>
   <meta name="description" content="A winter crop map of Eastern Uttar Pradesh made from Sentinel-1 radar, with an honest accuracy assessment.">
   <meta name="theme-color" content="#eaf5fa">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="assets/fonts/bagel-fat-one-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <script>document.documentElement.classList.add("is-loading");setTimeout(function(){document.documentElement.classList.add("is-ready")},7000)</script>
+  <noscript><style>.loader{display:none!important}</style></noscript>
+  <link rel="preload" href="assets/fonts/young-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/fonts/atkinson-hyperlegible-next-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="assets/img/d1-midground.webp" as="image" fetchpriority="high">
   <link rel="stylesheet" href="assets/vendor/lenis.css">
@@ -22,13 +24,15 @@
   <script src="assets/js/main.js" type="module"></script>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="logo" viewBox="0 0 40 40"><g fill="none" stroke-linecap="round" stroke-width="2.2" stroke="#f2a33a"><path d="M14 9a8.5 8.5 0 0 1 12 0"/><path d="M11.2 6.2a12.5 12.5 0 0 1 17.6 0"/></g><path d="M20 38V17" stroke="#1b3a33" stroke-width="2.4" stroke-linecap="round"/><g fill="#e0a800"><ellipse cx="20" cy="15.2" rx="2.5" ry="4.2"/><ellipse cx="15.6" cy="23.2" rx="2.4" ry="4.4" transform="rotate(-32 15.6 23.2)"/><ellipse cx="24.4" cy="23.2" rx="2.4" ry="4.4" transform="rotate(32 24.4 23.2)"/><ellipse cx="15.9" cy="30.4" rx="2.4" ry="4.4" transform="rotate(-32 15.9 30.4)"/><ellipse cx="24.1" cy="30.4" rx="2.4" ry="4.4" transform="rotate(32 24.1 30.4)"/></g></symbol></svg>
+  <div class="loader" role="status" aria-label="Loading"><svg class="loader__logo" viewBox="0 0 40 40" aria-hidden="true"><g fill="none" stroke-linecap="round" stroke-width="2.2" stroke="#f2a33a"><path class="arc" d="M14 9a8.5 8.5 0 0 1 12 0"/><path class="arc" d="M11.2 6.2a12.5 12.5 0 0 1 17.6 0"/></g><path d="M20 38V17" stroke="#1b3a33" stroke-width="2.4" stroke-linecap="round"/><g fill="#e0a800"><ellipse cx="20" cy="15.2" rx="2.5" ry="4.2"/><ellipse cx="15.6" cy="23.2" rx="2.4" ry="4.4" transform="rotate(-32 15.6 23.2)"/><ellipse cx="24.4" cy="23.2" rx="2.4" ry="4.4" transform="rotate(32 24.4 23.2)"/><ellipse cx="15.9" cy="30.4" rx="2.4" ry="4.4" transform="rotate(-32 15.9 30.4)"/><ellipse cx="24.1" cy="30.4" rx="2.4" ry="4.4" transform="rotate(32 24.1 30.4)"/></g></svg><p class="loader__name">Rabi Radar</p><span class="loader__bar"><span></span></span></div>
   <a class="skip" href="#story">Skip to content</a>
 
   <header class="nav">
     <div class="wrap nav__inner">
-      <a class="brand" href="#top" aria-label="Field Echoes, back to top">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#1b3a33"/><path d="M9 19a7 7 0 0 1 14 0z" fill="#f2c230"/><path d="M6 19h20" stroke="#f6faf2" stroke-width="2" stroke-linecap="round"/><path d="M9 23h14M12 26.5h8" stroke="#f6faf2" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>
-        Field Echoes
+      <a class="brand" href="#top" aria-label="Rabi Radar, back to top">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><use href="#logo"/></svg>
+        Rabi Radar
       </a>
       <nav aria-label="Main">
         <ul class="nav__links">
@@ -42,7 +46,6 @@
   <main>
     <section class="hero" id="top">
       <div class="hero__sky"><img src="assets/img/d0-sky.webp" alt="" width="1536" height="1024" fetchpriority="high"></div>
-      <div class="hero__clouds"><img src="assets/img/d5-clouds.webp" alt="" width="1536" height="1024"></div>
       <div class="hero__sat" aria-hidden="true">
         <div class="hero__sat-inner">
           <span class="ring" style="--i:0"></span><span class="ring" style="--i:1"></span><span class="ring" style="--i:2"></span>
@@ -83,14 +86,16 @@
     <div class="footer__band" aria-hidden="true"><img src="assets/img/s1-soil.webp" alt="" width="1983" height="793" loading="lazy"></div>
     <div class="wrap footer__body">
       <div>
-        <p class="footer__brand">Field Echoes</p>
+        <p class="footer__brand">Rabi Radar</p>
         <p class="footer__line">A winter crop map of Eastern Uttar Pradesh from Sentinel-1 radar.</p>
       </div>
-      <ul class="footer__links">
+      <div class="footer__social">
+        <ul class="footer__links">
         <li><a href="https://github.com/VaibhavNagare-GIS" target="_blank" rel="noopener noreferrer" aria-label="Vaibhav Nagare on GitHub"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8"/></svg></a></li>
         <li><a href="https://www.linkedin.com/in/vaibhav-nagare-gis" target="_blank" rel="noopener noreferrer" aria-label="Vaibhav Nagare on LinkedIn"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854zm4.943 12.248V6.169H2.542v7.225zm-1.2-8.212c.837 0 1.358-.554 1.358-1.248-.015-.709-.52-1.248-1.342-1.248S2.4 3.226 2.4 3.934c0 .694.521 1.248 1.327 1.248zm4.908 8.212V9.359c0-.216.016-.432.08-.586.173-.431.568-.878 1.232-.878.869 0 1.216.662 1.216 1.634v3.865h2.401V9.25c0-2.22-1.184-3.252-2.764-3.252-1.274 0-1.845.7-2.165 1.193v.025h-.016l.016-.025V6.169h-2.4c.03.678 0 7.225 0 7.225z"/></svg></a></li>
-        <li><a class="footer__repo" href="https://github.com/VaibhavNagare-GIS/sar-crop-mapping-eastern-up" target="_blank" rel="noopener noreferrer">Project repository</a></li>
       </ul>
+        <a class="footer__repo" href="https://github.com/VaibhavNagare-GIS/sar-crop-mapping-eastern-up" target="_blank" rel="noopener noreferrer">Project repository</a>
+      </div>
     </div>
     <p class="wrap footer__legal">&copy; 2026 Vaibhav Nagare</p>
   </footer>

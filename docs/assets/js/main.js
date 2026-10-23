@@ -1,3 +1,19 @@
+const root = document.documentElement;
+const loaderBar = document.querySelector(".loader__bar");
+const imgs = [...document.querySelectorAll(".hero img")];
+let done = 0;
+const bump = () => loaderBar && loaderBar.style.setProperty("--p", Math.min(1, ++done / (imgs.length + 1)));
+const ready = Promise.all([
+  document.fonts.ready.then(bump),
+  ...imgs.map((i) => i.decode().catch(() => {}).then(bump)),
+]);
+const minShow = new Promise((r) => setTimeout(r, Math.max(0, 1100 - performance.now())));
+const cap = new Promise((r) => setTimeout(r, 5000));
+Promise.race([Promise.all([ready, minShow]), cap]).then(() => {
+  root.classList.add("is-ready");
+  document.querySelector(".loader")?.setAttribute("inert", "");
+});
+
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const nav = document.querySelector(".nav");
 const setSolid = (y) => nav.classList.toggle("is-solid", y > 40);
@@ -37,7 +53,6 @@ if (!reduce && window.gsap && window.ScrollTrigger) {
   });
   const h = () => hero.offsetHeight;
   tl.to(".hero__sky", { y: () => h() * 0.16, ease: "none" }, 0)
-    .to(".hero__clouds", { y: () => h() * 0.1, ease: "none" }, 0)
     .to(".hero__sat", { y: () => h() * 0.05, ease: "none" }, 0)
     .to(".hero__fg", { y: () => -h() * 0.05, ease: "none" }, 0);
   document.fonts.ready.then(() => ScrollTrigger.refresh());

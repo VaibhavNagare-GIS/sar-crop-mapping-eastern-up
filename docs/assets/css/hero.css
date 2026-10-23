@@ -12,9 +12,6 @@
 .hero__sky { position: absolute; z-index: 0; inset: 0 0 calc(var(--horizon) - 6px) 0; will-change: transform; }
 .hero__sky img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; }
 
-.hero__clouds { position: absolute; z-index: 1; left: -5%; width: 110%; top: 0; bottom: calc(var(--horizon) - 6px); will-change: transform; }
-.hero__clouds img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 60%; animation: drift 90s ease-in-out infinite alternate; }
-
 .hero__sat {
   position: absolute; z-index: 2; right: max(4vw, 1rem); bottom: calc(var(--sh) * 0.66);
   width: clamp(150px, 24vw, 340px); aspect-ratio: 3 / 2; will-change: transform;
@@ -31,13 +28,16 @@
 
 .hero__copy { position: relative; z-index: 5; padding-top: calc(var(--nav-h) + clamp(2rem, 7svh, 5rem)); padding-bottom: var(--sp-3); }
 .hero__text { max-width: 36rem; }
-.hero h1 { font: 400 var(--fs-h1) / 1.02 var(--font-display); }
+.hero h1 { font: 400 var(--fs-h1) / 1.04 var(--font-display); letter-spacing: -0.01em; }
 .line { display: block; overflow: hidden; padding-bottom: 0.12em; margin-bottom: -0.12em; }
-.line > span { display: block; transform: translateY(110%); animation: rise 0.95s var(--ease-out) forwards; animation-delay: calc(0.15s + var(--i) * 0.1s); }
+.line > span { display: block; }
+.is-loading:not(.is-ready) .line > span { transform: translateY(110%); }
+.is-ready .line > span { animation: rise 0.95s var(--ease-out) both; animation-delay: calc(0.3s + var(--i) * 0.1s); }
 .hero__lead { margin-top: var(--sp-3); max-width: 30rem; font-size: var(--fs-lead); line-height: 1.45; }
 .hero__actions { margin-top: var(--sp-4); display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.hero__lead, .hero__actions { opacity: 0; animation: fade 0.8s ease-out 0.65s forwards; }
-.hero__actions { animation-delay: 0.8s; }
+.is-loading:not(.is-ready) :is(.hero__lead, .hero__actions) { opacity: 0; }
+.is-ready .hero__lead { animation: fade 0.8s ease-out 0.8s both; }
+.is-ready .hero__actions { animation: fade 0.8s ease-out 0.95s both; }
 
 .hero__scene { position: relative; z-index: 3; flex: none; width: var(--sw); height: var(--sh); margin-top: calc(var(--sh) * -0.06); }
 .hero__scene img { width: 100%; height: 100%; }
@@ -46,9 +46,8 @@
 .hero__fg--l { left: 0; }
 .hero__fg--r { right: 0; }
 
-@keyframes rise { to { transform: none; } }
-@keyframes fade { to { opacity: 1; } }
-@keyframes drift { from { transform: translateX(-3%); } to { transform: translateX(3%); } }
+@keyframes rise { from { transform: translateY(110%); } to { transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes float { 0%, 100% { transform: translateY(-6px); } 50% { transform: translateY(8px); } }
 @keyframes ring {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.15); }
@@ -58,7 +57,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
-  .line > span { transform: none; }
-  .hero__lead, .hero__actions { opacity: 1; }
+  .is-loading:not(.is-ready) .line > span { transform: none; }
+  .is-loading:not(.is-ready) :is(.hero__lead, .hero__actions) { opacity: 1; }
   .ring { display: none; }
 }
