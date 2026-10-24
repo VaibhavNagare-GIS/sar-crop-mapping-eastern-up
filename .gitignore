@@ -15,3 +15,4 @@ notes/
 # Earth Engine / Google credentials must never be committed
 credentials*
 *.json.key
+assets_src/

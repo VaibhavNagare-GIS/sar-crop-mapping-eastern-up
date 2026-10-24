@@ -57,3 +57,5 @@ if (!reduce && window.gsap && window.ScrollTrigger) {
     .to(".hero__fg", { y: () => -h() * 0.05, ease: "none" }, 0);
   document.fonts.ready.then(() => ScrollTrigger.refresh());
 }
+
+import("./map.js");
