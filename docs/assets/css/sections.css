@@ -1,5 +1,5 @@
 .chapter { padding-block: var(--sp-6); }
-.chapter h2 { font: 400 var(--fs-h2) / 1.08 var(--font-display); max-width: 18ch; }
+.chapter h2 { font: 400 var(--fs-h2) / 1.08 var(--font-display); max-width: 26ch; }
 .chapter__lead { margin-top: var(--sp-3); max-width: 56ch; font-size: var(--fs-lead); line-height: 1.5; }
 
 .footer { container-type: inline-size; background: var(--soil); color: var(--paper); }

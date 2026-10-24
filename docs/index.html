@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="assets/css/hero.css">
   <link rel="stylesheet" href="assets/css/sections.css">
   <link rel="stylesheet" href="assets/css/map.css">
+  <link rel="stylesheet" href="assets/css/story.css">
   <script src="assets/vendor/gsap.min.js" defer></script>
   <script src="assets/vendor/ScrollTrigger.min.js" defer></script>
   <script src="assets/vendor/lenis.min.js" defer></script>
@@ -72,9 +73,41 @@
       <img class="hero__fg hero__fg--r" src="assets/img/d3-fg-right.webp" alt="" width="1145" height="1374">
     </section>
 
-    <section class="chapter wrap" id="story">
-      <h2>How radar listens</h2>
-      <p class="chapter__lead">Sentinel-1 sends microwave pulses to the ground and records what comes back. Leaves, stems and soil each echo differently.</p>
+    <section class="chapter wrap wrap--wide" id="story" aria-labelledby="story-title">
+      <h2 id="story-title">How radar listens</h2>
+      <div class="story">
+        <ul class="points">
+          <li><b>It brings its own signal</b><span>Sentinel-1 sends microwave pulses and listens for the echo, so darkness does not matter and cloud mostly does not block it.</span></li>
+          <li><b>Crops echo differently</b><span>Leaves, stems and soil send back different amounts, in two channels called VV and VH.</span></li>
+          <li><b>It comes back every 12 days</b><span>Over this area there is one pass every 12 days. Stacked together they draw a winter-long signature for each field.</span></li>
+        </ul>
+        <figure class="radar" aria-label="Diagram: a satellite sends pulses down and each crop echoes back differently">
+          <img class="radar__sat" src="assets/img/d4-satellite.webp" alt="" width="1536" height="1024" loading="lazy">
+          <span class="pulse" style="--i:0"></span><span class="pulse" style="--i:1"></span><span class="pulse" style="--i:2"></span>
+          <div class="radar__crops">
+            <div class="radar__crop"><span class="echo" style="--i:0"></span><span class="echo" style="--i:1"></span><img src="assets/img/c1-wheat.webp" alt="" width="1254" height="1254" loading="lazy"><b>Wheat</b></div>
+            <div class="radar__crop"><span class="echo" style="--i:0;--d:0.5s"></span><span class="echo" style="--i:1;--d:0.5s"></span><img src="assets/img/c2-mustard.webp" alt="" width="1254" height="1254" loading="lazy"><b>Mustard</b></div>
+            <div class="radar__crop"><span class="echo" style="--i:0;--d:0.2s"></span><span class="echo" style="--i:1;--d:0.2s"></span><img src="assets/img/c4-sugarcane.webp" alt="" width="1024" height="1536" loading="lazy"><b>Sugarcane</b></div>
+          </div>
+          <div class="radar__ground" aria-hidden="true"><img src="assets/img/s1-soil.webp" alt="" width="1983" height="793" loading="lazy"></div>
+        </figure>
+      </div>
+    </section>
+
+    <section class="chapter" id="voices" aria-labelledby="voices-title">
+      <div class="wrap wrap--wide">
+        <h2 id="voices-title">Every crop has a voice</h2>
+        <p class="chapter__lead">Each line is the typical echo of one crop through the winter. Hover or tap to compare a date.</p>
+        <div class="voices">
+          <div class="voices__chart" id="voices-chart" role="img" aria-label="Line chart of radar echo strength by crop across the 2021-22 winter season">Loading the chart</div>
+          <div class="voices__side">
+            <fieldset id="voices-channels"><legend>Channel</legend></fieldset>
+            <fieldset id="voices-crops"><legend>Crops</legend></fieldset>
+            <p class="voices__read" id="voices-read" aria-live="polite"></p>
+            <p class="hint">Lines are the median of the training pixels. The shaded band covers the middle half of them. Values are in decibels (dB).</p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="chapter" id="map" aria-labelledby="map-title">
