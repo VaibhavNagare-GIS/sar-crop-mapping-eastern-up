@@ -10,9 +10,29 @@ const REGIONS = {
   far: { tiles: { class: "class_far", conf: "conf_far" }, fields: ["fields_far"] },
 };
 const RIGHT = "#0072b2", WRONG = "#cc79a7", NEUTRAL = "#6b7c76";
-const EOX = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2021_3857/default/g/{z}/{y}/{x}.jpg";
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 let map, meta, ml, popupOnMap, ready = false;
-const state = { region: "study", layer: "class" };
+const state = { region: "study", layer: "class", basemap: "map" };
+
+class BasemapControl {
+  onAdd() {
+    this.el = el("div", "", "maplibregl-ctrl basemap");
+    this.el.setAttribute("role", "group");
+    this.el.setAttribute("aria-label", "Basemap");
+    for (const [key, label] of [["map", "Map"], ["sat", "Satellite"]]) {
+      const b = el("button", label);
+      b.type = "button";
+      b.dataset.key = key;
+      b.addEventListener("click", () => { state.basemap = key; show(); });
+      this.el.append(b);
+    }
+    this.sync();
+    return this.el;
+  }
+  sync() { for (const b of this.el.children) b.setAttribute("aria-pressed", String(b.dataset.key === state.basemap)); }
+  onRemove() { this.el.remove(); }
+}
+const basemapControl = new BasemapControl();
 
 const el = (tag, text, cls) => { const n = document.createElement(tag); if (text) n.textContent = text; if (cls) n.className = cls; return n; };
 const rows = (box, list) => { for (const [k, v] of list) { const p = el("p"); p.append(el("span", k, "pop__k"), document.createTextNode(v)); box.append(p); } };
@@ -48,7 +68,9 @@ function show() {
   const on = form.elements.fields.checked ? fieldLayers() : [];
   for (const name of Object.keys(meta.fields)) for (const p of ["ff", "fc", "fl"]) map.setLayoutProperty(`${p}_${name}`, "visibility", on.includes(name) ? "visible" : "none");
   form.querySelector('input[value="masked"]').disabled = !r.tiles.masked;
-  const sat = form.elements.basemap.value === "sat";
+  const sat = state.basemap === "sat";
+  basemapControl.sync();
+  document.querySelector("#basemap-note").hidden = !sat;
   map.setLayoutProperty("sat", "visibility", sat ? "visible" : "none");
   map.setLayoutProperty("osm", "visibility", sat ? "none" : "visible");
   document.querySelector("#map-fields-note").hidden = !form.elements.fields.checked;
@@ -121,6 +143,7 @@ async function pixelPopup(e) {
 }
 
 function build() {
+  map.addControl(basemapControl, "top-left");
   map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
   map.addControl(new ml.ScaleControl({ unit: "metric" }), "bottom-left");
   for (const [name, t] of Object.entries(meta.tiles)) {
@@ -151,7 +174,7 @@ form.addEventListener("input", (e) => {
   const n = e.target.name;
   if (n === "region") { state.region = e.target.value; if (!REGIONS[state.region].tiles[state.layer]) state.layer = "class"; form.elements.layer.value = state.layer; popupOnMap?.remove(); show(); fit(1600); }
   else if (n === "layer") { state.layer = e.target.value; show(); }
-  else if (n === "fields" || n === "basemap") show();
+  else if (n === "fields") show();
   else if (n === "opacity") for (const name of Object.keys(meta.tiles)) map.setPaintProperty(`l_${name}`, "raster-opacity", e.target.value / 100);
 });
 form.addEventListener("submit", (e) => e.preventDefault());
@@ -173,7 +196,7 @@ async function init() {
       center: [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], zoom: 6.2, maxZoom: 18, dragRotate: false, pitchWithRotate: false, cooperativeGestures: true,
       style: { version: 8, sources: {
           osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, maxzoom: 19, attribution: "&copy; OpenStreetMap contributors" },
-          sat: { type: "raster", tiles: [EOX], tileSize: 256, maxzoom: 13, attribution: '<a href="https://cloudless.eox.at" target="_blank" rel="noopener">EOxCloudless</a> by EOX IT Services GmbH (Contains modified Copernicus Sentinel data 2021)' } },
+          sat: { type: "raster", tiles: [ESRI], tileSize: 256, maxzoom: 16, attribution: 'Tiles &copy; <a href="https://www.esri.com" target="_blank" rel="noopener">Esri</a>, Maxar, Earthstar Geographics, and the GIS User Community' } },
         layers: [{ id: "bg", type: "background", paint: { "background-color": "#e8efe4" } },
           { id: "osm", type: "raster", source: "osm", paint: { "raster-saturation": -0.6, "raster-brightness-max": 0.96 } },
           { id: "sat", type: "raster", source: "sat", layout: { visibility: "none" } }] },

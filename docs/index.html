@@ -83,7 +83,10 @@
         <p class="chapter__lead">Pick a region and a layer. Click any pixel for its class and confidence, or click an outlined field to compare the model with the survey.</p>
       </div>
       <div class="mapbox wrap wrap--wide">
-        <div class="mapbox__map" id="map-canvas" data-lenis-prevent role="region" aria-label="Interactive crop map of Eastern Uttar Pradesh">Loading the map</div>
+        <div class="mapbox__main">
+          <div class="mapbox__map" id="map-canvas" data-lenis-prevent role="region" aria-label="Interactive crop map of Eastern Uttar Pradesh">Loading the map</div>
+          <p class="map-note" id="basemap-note" hidden>Satellite imagery comes from several providers and dates, so it may not show the 2021-22 winter crops.</p>
+        </div>
         <form class="mapbox__panel" aria-label="Map controls">
           <fieldset>
             <legend>Region</legend>
@@ -97,12 +100,6 @@
             <label class="chip"><input type="radio" name="layer" value="class" checked><span>Crop class</span></label>
             <label class="chip"><input type="radio" name="layer" value="masked"><span>Farmland only</span></label>
             <label class="chip"><input type="radio" name="layer" value="conf"><span>Confidence</span></label>
-          </fieldset>
-          <fieldset>
-            <legend>Basemap</legend>
-            <label class="chip"><input type="radio" name="basemap" value="map" checked><span>Map</span></label>
-            <label class="chip"><input type="radio" name="basemap" value="sat"><span>Satellite</span></label>
-            <p class="hint">Satellite: a cloud-free Sentinel-2 composite of 2021, at 10 m. It shows field layout and land cover, not necessarily what grew that winter.</p>
           </fieldset>
           <label class="check"><input type="checkbox" name="fields" checked> Surveyed fields</label>
           <p class="hint" id="map-fields-note">Blue outline: the model was right. Pink: wrong. Grey: training field or not scored.</p>

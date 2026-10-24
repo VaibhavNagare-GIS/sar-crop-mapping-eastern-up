@@ -1,7 +1,8 @@
 .wrap--wide { width: min(84rem, 100% - 2 * var(--gutter)); }
 #map { padding-top: var(--sp-6); padding-bottom: var(--sp-5); }
-.mapbox { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: var(--sp-3); margin-top: var(--sp-4); align-items: start; }
-.mapbox__map { height: clamp(28rem, 76svh, 48rem); border-radius: 1.25rem; overflow: hidden; background: #e8efe4; box-shadow: inset 0 0 0 2px rgba(27, 58, 51, 0.14); display: grid; place-items: center; }
+.mapbox { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: var(--sp-3); margin-top: var(--sp-4); align-items: stretch; }
+.mapbox__main { display: flex; flex-direction: column; gap: var(--sp-1); min-width: 0; }
+.mapbox__map { flex: 1 1 auto; min-height: clamp(28rem, 76svh, 48rem); border-radius: 1.25rem; overflow: hidden; background: #e8efe4; box-shadow: inset 0 0 0 2px rgba(27, 58, 51, 0.14); display: grid; place-items: center; }
 .mapbox__map.is-error { padding: var(--sp-3); text-align: center; }
 .mapbox__panel { display: grid; gap: var(--sp-3); padding: var(--sp-3); border-radius: 1.25rem; background: #eaf1e4; }
 .mapbox__panel fieldset { margin: 0; padding: 0; border: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -26,4 +27,10 @@
 .pop p { font-size: var(--fs-small); line-height: 1.45; }
 .pop__k { display: block; font-weight: 700; }
 .maplibregl-popup-content { font-family: var(--font-body); color: var(--ink); border-radius: 0.75rem; padding: 0.875rem 1rem; }
-@media (max-width: 62rem) { .mapbox { grid-template-columns: minmax(0, 1fr); } .mapbox__map { height: clamp(24rem, 70svh, 40rem); } }
+@media (max-width: 62rem) { .mapbox { grid-template-columns: minmax(0, 1fr); } .mapbox__map { min-height: clamp(24rem, 70svh, 40rem); } }
+.map-note { font-size: var(--fs-small); color: #36544c; }
+.maplibregl-ctrl.basemap { display: flex; padding: 3px; border-radius: 999px; background: var(--paper); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); }
+.maplibregl-ctrl.basemap button { min-height: 2rem; padding: 0 0.9rem; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font: 700 var(--fs-small) / 1 var(--font-body); cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+.maplibregl-ctrl.basemap button:not(:disabled):hover { background: rgba(242, 194, 48, 0.45); }
+.maplibregl-ctrl.basemap button[aria-pressed="true"], .maplibregl-ctrl.basemap button[aria-pressed="true"]:not(:disabled):hover { background: var(--ink); color: var(--paper); }
+.maplibregl-ctrl.basemap button:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
