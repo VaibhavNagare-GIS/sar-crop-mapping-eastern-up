@@ -1,0 +1,10 @@
+{
+  "leaf": 20,
+  "trees": 500,
+  "seed": 42,
+  "smooth": 5,
+  "classes": "3",
+  "features": "dense_asc_mt2 + dense_desc_mt2, raw windows plus VH-VV",
+  "created": "2026-10-14T17:07:25",
+  "git_commit": "bf259dd5e612afba387c6e594439a996543d3a8f"
+}
