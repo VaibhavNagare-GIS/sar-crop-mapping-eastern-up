@@ -60,3 +60,4 @@ if (!reduce && window.gsap && window.ScrollTrigger) {
 
 import("./map.js");
 import("./voices.js");
+import("./scores.js");

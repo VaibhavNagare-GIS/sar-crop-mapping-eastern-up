@@ -65,3 +65,5 @@ html.is-loading:not(.is-ready) { overflow: hidden; }
 .loader__bar span { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: left; transform: scaleX(var(--p, 0.05)); transition: transform 0.4s var(--ease-out); }
 @keyframes echo { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .loader__logo .arc { animation: none !important; } }
+
+@media (max-width: 30rem) { .brand { font-size: var(--fs-body); gap: 0.4rem; } .brand svg { width: 2rem; height: 2rem; } .nav__links a { padding: 0.5rem 0.5rem; } }

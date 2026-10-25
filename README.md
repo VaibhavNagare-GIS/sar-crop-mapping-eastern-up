@@ -78,6 +78,7 @@ Earth Engine steps need `earthengine authenticate` with the account that owns yo
 python src/p8_tiles.py                 # add --masked, --conf, --set _near, --set _far for the other layers
 python src/p8_geojson.py               # field polygons (also --set _near / _far)
 python src/p8_signatures.py --folder data/phase2/2021-10-01_mt2
+python tools/export_results.py         # copies the final scores as strict JSON for the page
 python tools/check_site.py             # run before every push: all of docs/ must be committed
 python tools/push_in_batches.py        # pushes new tile files in small commits (avoids HTTP 408)
 ```

@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="assets/css/sections.css">
   <link rel="stylesheet" href="assets/css/map.css">
   <link rel="stylesheet" href="assets/css/story.css">
+  <link rel="stylesheet" href="assets/css/vista.css">
   <script src="assets/vendor/gsap.min.js" defer></script>
   <script src="assets/vendor/ScrollTrigger.min.js" defer></script>
   <script src="assets/vendor/lenis.min.js" defer></script>
@@ -40,6 +41,7 @@
         <ul class="nav__links">
           <li><a href="#story">Story</a></li>
           <li><a href="#map">Map</a></li>
+          <li><a href="#scores">Scores</a></li>
         </ul>
       </nav>
     </div>
@@ -140,6 +142,76 @@
           <div class="legend" id="legend" aria-live="polite"></div>
         </form>
       </div>
+    </section>
+    <section class="vista night" id="scores" aria-labelledby="scores-title">
+      <div class="vista__sky"><img src="assets/img/n0-sky-night.webp" alt="" width="1536" height="1024" loading="lazy"></div>
+      <div class="vista__content wrap wrap--wide">
+        <h2 id="scores-title">The honest report card</h2>
+        <p class="chapter__lead">Scored on fields the model did not train on. Pick an area and a level to see every number, including the weak ones.</p>
+        <div class="scores__controls">
+          <fieldset><legend>Area</legend><span id="scores-region"></span></fieldset>
+          <fieldset><legend>Level</legend><span id="scores-level"></span></fieldset>
+        </div>
+        <div class="scores">
+          <div class="panel">
+            <div class="scores__big" id="scores-big"></div>
+            <p id="scores-verdict" aria-live="polite">Loading the scores</p>
+            <div id="scores-bars"></div>
+            <p class="hint">Dot: the score. Bar: its 95% range. Pink tick: always guessing the biggest class.</p>
+          </div>
+          <div class="panel">
+            <h3>Where it gets confused</h3>
+            <div id="scores-matrix" role="img" aria-label="Confusion matrix: what the survey says against what the model said"></div>
+          </div>
+        </div>
+        <div class="panel scores__table">
+          <h3>Per class</h3>
+          <table id="scores-class">
+            <thead><tr><th scope="col">Class</th><th scope="col" title="Share of real fields of this class that the model found">Found</th><th scope="col" title="Share of the model's guesses for this class that were right">Right when named</th><th scope="col">F1</th><th scope="col">AUC</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          <ul id="scores-notes"></ul>
+        </div>
+      </div>
+      <div class="vista__scene"><img src="assets/img/n1-midground-night.webp" alt="" width="1672" height="941" loading="lazy"></div>
+      <img class="vista__fg" src="assets/img/n2-fg-wheat-night.webp" alt="" width="1536" height="1024" loading="lazy">
+    </section>
+
+    <section class="chapter" id="limits" aria-labelledby="limits-title">
+      <div class="wrap wrap--wide">
+        <h2 id="limits-title">Where it falls short</h2>
+        <div class="limits">
+          <ul class="points">
+            <li><b>Labels come after harvest</b><span>The survey was done in May 2022, so each field's crop is recorded afterwards. It is not a random sample, so mapped areas are not area estimates.</span></li>
+            <li><b>Small fields blur</b><span>A 10 m radar pixel often mixes neighbouring fields, and accuracy rises with field size.</span></li>
+            <li><b>Mustard and lentil are merged</b><span>There are too few lentil fields to learn the two apart.</span></li>
+            <li><b>Some crops are missed</b><span>The class table above shows which crops the model finds and which it misses.</span></li>
+          </ul>
+          <div>
+            <h3>What comes next</h3>
+            <ul class="points">
+              <li><b>Add optical imagery</b><span>Sentinel-2 raised field macro-F1 from 0.560 to 0.609 in tests, but the ranges overlap, so it needs more fields to confirm.</span></li>
+              <li><b>Try a temporal neural network</b><span>A model that reads the whole season as a sequence is planned and not yet run.</span></li>
+              <li><b>Use L-band radar</b><span>NISAR L-band data became public for passes from 17 June 2026, so a future season could use it. It cannot cover 2021-22.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="vista dawn" id="end" aria-labelledby="end-title">
+      <div class="vista__sky"><img src="assets/img/d0-sky.webp" alt="" width="1536" height="1024" loading="lazy"></div>
+      <div class="vista__content wrap">
+        <h2 id="end-title">From echoes to a map</h2>
+        <p class="chapter__lead">Radar heard the fields. This map is a first answer, not the last one.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#map">Back to the map</a>
+          <a class="btn btn--ghost" href="https://github.com/VaibhavNagare-GIS/sar-crop-mapping-eastern-up" target="_blank" rel="noopener noreferrer">Read the code</a>
+        </div>
+      </div>
+      <div class="vista__scene"><img src="assets/img/d1-midground.webp" alt="" width="1672" height="941" loading="lazy"></div>
+      <img class="vista__corner vista__corner--l" src="assets/img/d2-fg-left.webp" alt="" width="1145" height="1374" loading="lazy">
+      <img class="vista__corner vista__corner--r" src="assets/img/d3-fg-right.webp" alt="" width="1145" height="1374" loading="lazy">
     </section>
   </main>
 

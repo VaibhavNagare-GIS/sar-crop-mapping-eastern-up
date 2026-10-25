@@ -1,3 +1,5 @@
+import { loadECharts } from "./echarts-loader.js";
+
 const section = document.querySelector("#voices");
 const holder = document.querySelector("#voices-chart");
 const readout = document.querySelector("#voices-read");
@@ -16,10 +18,6 @@ const day = (iso, add = 0) => new Date(Date.parse(`${iso}T00:00:00Z`) + add * 86
 const range = (i) => `${day(data.windows[i])} to ${day(data.windows[i], data.window_days - 1)}`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]);
 const db = (v) => `${v.toFixed(1)} dB`;
-
-function loadScript(src) {
-  return new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => no(new Error(`Could not load ${src}`)); document.head.append(s); });
-}
 
 function describe(i) {
   const s = data.series[state.channel], rows = [...state.crops].map((c) => [c, s[c].med[i]]).sort((a, b) => b[1] - a[1]);
@@ -77,7 +75,7 @@ function controls() {
 async function start() {
   try {
     data = await (await fetch(`${base}data/signatures.json`)).json();
-    await loadScript(`${base}assets/vendor/echarts/echarts.min.js`);
+    const echarts = await loadECharts();
     holder.replaceChildren();
     const node = document.createElement("div");
     holder.append(node);
