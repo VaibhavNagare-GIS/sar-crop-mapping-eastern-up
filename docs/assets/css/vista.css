@@ -4,7 +4,6 @@
 .vista__content { position: relative; z-index: 4; padding-bottom: var(--sp-3); }
 .vista__scene { position: relative; z-index: 2; flex: none; width: var(--sw); height: var(--sh); margin-top: calc(var(--sh) * -0.06); }
 .vista__scene img { width: 100%; height: 100%; }
-.vista__fg { position: absolute; z-index: 3; left: 0; bottom: -1px; width: 100%; height: clamp(5rem, 14vw, 13rem); object-fit: cover; object-position: 50% 100%; pointer-events: none; }
 .vista__corner { position: absolute; z-index: 3; bottom: -1px; width: clamp(120px, 18vw, 280px); pointer-events: none; }
 .vista__corner--l { left: 0; }
 .vista__corner--r { right: 0; }
@@ -55,3 +54,4 @@
 .dawn .hero__actions { opacity: 1; animation: none; }
 @media (max-width: 62rem) { .big__v { font-size: var(--fs-h2); } .scores, .limits { grid-template-columns: minmax(0, 1fr); } .scores__big { grid-template-columns: repeat(3, minmax(0, 1fr)); } .bar { grid-template-columns: 7.5rem minmax(0, 1fr) 2.5rem; } }
 .bar[hidden] { display: none; }
+.dawn::after { content: ""; position: absolute; z-index: 5; inset: auto 0 0 0; height: 5rem; pointer-events: none; background: linear-gradient(to bottom, transparent, #4ea12e); }

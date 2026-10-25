@@ -6,6 +6,15 @@
   <title>CARISMA: crop mapping from radar in Eastern Uttar Pradesh</title>
   <meta name="description" content="A winter crop map of Eastern Uttar Pradesh made from Sentinel-1 radar, with an honest accuracy assessment.">
   <meta name="theme-color" content="#eaf5fa">
+  <link rel="canonical" href="https://vaibhavnagare-gis.github.io/sar-crop-mapping-eastern-up/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="CARISMA: crop mapping from radar in Eastern Uttar Pradesh">
+  <meta property="og:description" content="A winter crop map of Eastern Uttar Pradesh made from Sentinel-1 radar, with an honest accuracy assessment.">
+  <meta property="og:url" content="https://vaibhavnagare-gis.github.io/sar-crop-mapping-eastern-up/">
+  <meta property="og:image" content="https://vaibhavnagare-gis.github.io/sar-crop-mapping-eastern-up/assets/img/og.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <script>document.documentElement.classList.add("is-loading");setTimeout(function(){document.documentElement.classList.add("is-ready")},7000)</script>
   <noscript><style>.loader{display:none!important}</style></noscript>
@@ -53,7 +62,7 @@
       <div class="hero__sat" aria-hidden="true">
         <div class="hero__sat-inner">
           <span class="ring" style="--i:0"></span><span class="ring" style="--i:1"></span><span class="ring" style="--i:2"></span>
-          <img src="assets/img/d4-satellite.webp" alt="" width="1536" height="1024">
+          <img src="assets/img/d4-satellite.webp" alt="" width="720" height="480">
         </div>
       </div>
 
@@ -71,8 +80,8 @@
       <div class="hero__scene" role="img" aria-label="Illustration of farmland in the Ganges plain with mustard, wheat and sugarcane fields, a farmhouse and a tractor">
         <img src="assets/img/d1-midground.webp" alt="" width="1672" height="941">
       </div>
-      <img class="hero__fg hero__fg--l" src="assets/img/d2-fg-left.webp" alt="" width="1145" height="1374">
-      <img class="hero__fg hero__fg--r" src="assets/img/d3-fg-right.webp" alt="" width="1145" height="1374">
+      <img class="hero__fg hero__fg--l" src="assets/img/d2-fg-left.webp" alt="" width="720" height="864">
+      <img class="hero__fg hero__fg--r" src="assets/img/d3-fg-right.webp" alt="" width="720" height="864">
     </section>
 
     <section class="chapter wrap wrap--wide" id="story" aria-labelledby="story-title">
@@ -84,12 +93,12 @@
           <li><b>It comes back every 12 days</b><span>Over this area there is one pass every 12 days. Stacked together they draw a winter-long signature for each field.</span></li>
         </ul>
         <figure class="radar" aria-label="Diagram: a satellite sends pulses down and each crop echoes back differently">
-          <img class="radar__sat" src="assets/img/d4-satellite.webp" alt="" width="1536" height="1024" loading="lazy">
+          <img class="radar__sat" src="assets/img/d4-satellite.webp" alt="" width="720" height="480" loading="lazy">
           <span class="pulse" style="--i:0"></span><span class="pulse" style="--i:1"></span><span class="pulse" style="--i:2"></span>
           <div class="radar__crops">
-            <div class="radar__crop"><span class="echo" style="--i:0"></span><span class="echo" style="--i:1"></span><img src="assets/img/c1-wheat.webp" alt="" width="1254" height="1254" loading="lazy"><b>Wheat</b></div>
-            <div class="radar__crop"><span class="echo" style="--i:0;--d:0.5s"></span><span class="echo" style="--i:1;--d:0.5s"></span><img src="assets/img/c2-mustard.webp" alt="" width="1254" height="1254" loading="lazy"><b>Mustard</b></div>
-            <div class="radar__crop"><span class="echo" style="--i:0;--d:0.2s"></span><span class="echo" style="--i:1;--d:0.2s"></span><img src="assets/img/c4-sugarcane.webp" alt="" width="1024" height="1536" loading="lazy"><b>Sugarcane</b></div>
+            <div class="radar__crop"><span class="echo" style="--i:0"></span><span class="echo" style="--i:1"></span><img src="assets/img/c1-wheat.webp" alt="" width="480" height="480" loading="lazy"><b>Wheat</b></div>
+            <div class="radar__crop"><span class="echo" style="--i:0;--d:0.5s"></span><span class="echo" style="--i:1;--d:0.5s"></span><img src="assets/img/c2-mustard.webp" alt="" width="480" height="480" loading="lazy"><b>Mustard</b></div>
+            <div class="radar__crop"><span class="echo" style="--i:0;--d:0.2s"></span><span class="echo" style="--i:1;--d:0.2s"></span><img src="assets/img/c4-sugarcane.webp" alt="" width="480" height="720" loading="lazy"><b>Sugarcane</b></div>
           </div>
           <div class="radar__ground" aria-hidden="true"><img src="assets/img/s1-soil.webp" alt="" width="1983" height="793" loading="lazy"></div>
         </figure>
@@ -174,7 +183,6 @@
         </div>
       </div>
       <div class="vista__scene"><img src="assets/img/n1-midground-night.webp" alt="" width="1672" height="941" loading="lazy"></div>
-      <img class="vista__fg" src="assets/img/n2-fg-wheat-night.webp" alt="" width="1536" height="1024" loading="lazy">
     </section>
 
     <section class="chapter" id="limits" aria-labelledby="limits-title">
@@ -210,8 +218,8 @@
         </div>
       </div>
       <div class="vista__scene"><img src="assets/img/d1-midground.webp" alt="" width="1672" height="941" loading="lazy"></div>
-      <img class="vista__corner vista__corner--l" src="assets/img/d2-fg-left.webp" alt="" width="1145" height="1374" loading="lazy">
-      <img class="vista__corner vista__corner--r" src="assets/img/d3-fg-right.webp" alt="" width="1145" height="1374" loading="lazy">
+      <img class="vista__corner vista__corner--l" src="assets/img/d2-fg-left.webp" alt="" width="720" height="864" loading="lazy">
+      <img class="vista__corner vista__corner--r" src="assets/img/d3-fg-right.webp" alt="" width="720" height="864" loading="lazy">
     </section>
   </main>
 

@@ -29,3 +29,4 @@
 .voices__read { min-height: 4.5em; font-weight: 700; line-height: 1.4; }
 @media (max-width: 62rem) { .story, .voices { grid-template-columns: minmax(0, 1fr); } .voices__chart { min-height: 22rem; } .radar { max-height: 28rem; } }
 @media (prefers-reduced-motion: reduce) { .pulse, .echo { display: none; } .radar__sat { animation: none; } }
+.radar__crop:nth-child(3) img { -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%); mask-image: linear-gradient(to bottom, transparent, #000 14%); }
