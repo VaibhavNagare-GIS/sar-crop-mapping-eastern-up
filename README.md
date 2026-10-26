@@ -21,6 +21,12 @@ Winter crop type mapping in eastern Uttar Pradesh from Sentinel-1 radar (Rabi 20
 &nbsp;
 <a href="https://github.com/VaibhavNagare-GIS"><img src="docs/assets/img/button-github.svg" alt="Vaibhav Nagare on GitHub" height="40"></a>
 
+<br><br>
+
+<img src="docs/assets/img/readme-hero.jpg" alt="CARISMA home page: sunrise over eastern Uttar Pradesh farmland with a radar satellite above the fields" width="100%">
+
+<img src="docs/assets/img/readme-map.png" alt="CARISMA crop map with field outlines" width="100%">
+
 </div>
 
 ---
